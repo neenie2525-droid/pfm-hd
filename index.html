@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffc8da">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PFM-HD">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>PFM-HD</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&family=Itim&display=swap">
+<style>
+/* Layout: one column of numbered steps (ประเมิน → แผนดึงน้ำ → แจ้งเตือน), bottom tab bar for the four ward tasks */
+:root{
+  --bg:#fff3f7; --surface:#ffffff; --sunk:#fff0f5; --ink:#4a2a3b; --muted:#8e6b7d; --line:#f7d6e2;
+  --accent:#d94f84; --accent-2:#f59ab9; --accent-soft:#ffe2ec; --accent-ink:#ffffff;
+  --ok:#2c8f6c; --ok-soft:#dcf4e9; --warn:#a86b12; --warn-soft:#fff0d4; --crit:#cf3d57; --crit-soft:#ffe0e6;
+  --shadow:0 6px 18px rgba(217,79,132,.10);
+  --bar:linear-gradient(135deg,#ffc2d6 0%,#ffd9e6 55%,#ffe9d9 100%);
+  --f-display:"Itim","Mali",system-ui,sans-serif;
+  --f-body:"Mali",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Mali",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#22141c; --surface:#2e1c26; --sunk:#27171f; --ink:#fbe8f0; --muted:#c9a3b5; --line:#4a2c3b;
+  --accent:#ff8fb6; --accent-2:#c75b86; --accent-soft:#4a2335; --accent-ink:#2a121d;
+  --ok:#6fd3a8; --ok-soft:#173a2c; --warn:#f0bd62; --warn-soft:#3d2c12; --crit:#ff8193; --crit-soft:#47202a;
+  --shadow:0 6px 18px rgba(0,0,0,.3); --bar:linear-gradient(135deg,#5a2a40 0%,#4a2335 60%,#4a2e2a 100%); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#22141c; --surface:#2e1c26; --sunk:#27171f; --ink:#fbe8f0; --muted:#c9a3b5; --line:#4a2c3b;
+  --accent:#ff8fb6; --accent-2:#c75b86; --accent-soft:#4a2335; --accent-ink:#2a121d;
+  --ok:#6fd3a8; --ok-soft:#173a2c; --warn:#f0bd62; --warn-soft:#3d2c12; --crit:#ff8193; --crit-soft:#47202a;
+  --shadow:0 6px 18px rgba(0,0,0,.3); --bar:linear-gradient(135deg,#5a2a40 0%,#4a2335 60%,#4a2e2a 100%); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:#ffc8da}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bar);border-radius:0 0 22px 22px;box-shadow:var(--shadow)}
+.top{display:flex;align-items:center;gap:10px;padding-block:12px 14px}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--f-display);font-size:23px;line-height:1;flex:0 0 auto;color:var(--ink)}
+.brand svg{width:34px;height:34px;flex:0 0 auto}
+.brand small{display:block;font:500 11px var(--f-body);color:var(--muted);margin-top:2px}
+.pt select{background:rgba(255,255,255,.85);color:#4a2a3b;border-color:transparent;border-radius:999px;font-weight:600;color-scheme:light}
+.pt{margin-left:auto;display:flex;gap:6px;align-items:center;min-width:0;flex:1 1 auto;justify-content:flex-end}
+.pt select{max-width:230px}
+main{padding-block:16px calc(150px + env(safe-area-inset-bottom,0px))}
+h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0 0 4px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:400;font-size:18.5px;margin:0;letter-spacing:.01em}
+.lead{color:var(--muted);margin:0 0 14px;font-size:14px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;min-width:0;box-shadow:var(--shadow)}
+.step{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.step>b{flex:0 0 34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--accent-2),var(--accent));color:#fff;display:grid;place-items:center;font:18px var(--f-display);box-shadow:0 3px 8px rgba(217,79,132,.25)}
+.step small{display:block;color:var(--accent);font:600 11px var(--f-body);letter-spacing:.08em}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.f.wide{grid-column:1/-1}
+.f>span{font-size:13px;color:var(--muted)}
+.f>span b{color:var(--ink);font-weight:600}
+input,select{font:500 16px var(--f-body);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:14px;padding:10px 14px;width:100%;min-width:0;min-height:44px}
+input[type=number]{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.f.wide input{max-width:220px}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.q{display:flex;gap:6px;flex-wrap:wrap}
+.q button{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;font:600 14.5px var(--f-body);cursor:pointer;min-height:36px}
+.q button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{text-align:left;border:1.5px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:18px;padding:10px 12px;cursor:pointer;font:600 14.5px var(--f-body)}
+.seg button small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.chk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:14px;cursor:pointer;background:var(--sunk);user-select:none;min-height:38px}
+.chk input{width:auto;min-height:0;margin:0;accent-color:var(--accent)}
+.chk:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.btn{font:600 15.5px var(--f-body);border-radius:999px;padding:11px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-height:44px}
+.btn.primary{background:linear-gradient(135deg,var(--accent-2),var(--accent));border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(217,79,132,.28)}
+.btn.block{width:100%}
+.btn.ghost{background:none}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:5px 10px;font-size:13px;min-height:32px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sub{font-size:13px;color:var(--muted);font-weight:600;margin:14px 0 8px}
+details.more{border-top:1px dashed var(--line);margin-top:14px;padding-top:12px}
+details.more>summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--accent);list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"＋ "}
+details.more[open]>summary::before{content:"− "}
+details.more>div{margin-top:12px}
+.summ{font-size:13.5px;color:var(--muted);margin:10px 0 0}
+.summ b{color:var(--ink)}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-top:14px}
+.readout>div{background:var(--surface);padding:12px 14px;min-width:0}
+.readout .k{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.readout .v{font-family:var(--f-mono);font-size:27px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.readout .v small{font-size:12px;color:var(--muted);margin-left:3px}
+.readout .t{font-weight:600;font-size:16px;margin-top:3px}
+.readout .s{font-size:12px;margin-top:2px;color:var(--muted)}
+.readout>div.is-warn{background:var(--warn-soft)} .readout>div.is-crit{background:var(--crit-soft)} .readout>div.is-ok{background:var(--ok-soft)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.p-ok{background:var(--ok-soft);color:var(--ok)} .p-warn{background:var(--warn-soft);color:var(--warn)} .p-crit{background:var(--crit-soft);color:var(--crit)} .p-info{background:var(--accent-soft);color:var(--accent)}
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert{display:grid;grid-template-columns:7px 1fr;border-radius:16px;overflow:hidden;background:var(--sunk);border:1px solid var(--line)}
+.alert>i{display:block} .alert.crit>i{background:var(--crit)} .alert.warn>i{background:var(--warn)} .alert.info>i{background:var(--accent)} .alert.ok>i{background:var(--ok)}
+.alert>div{padding:9px 12px;min-width:0}
+.alert b{display:block;font-size:14.5px}
+.alert p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:12px;background:var(--sunk)}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+tr:last-child td{border-bottom:0}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font:11px var(--f-mono)}
+.note{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.formula{font-family:var(--f-mono);font-size:12.5px;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--muted);overflow-x:auto;white-space:pre}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
+.sample{font-size:12.5px;color:var(--warn);background:var(--warn-soft);border-radius:14px;padding:7px 11px;margin-bottom:12px}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:9;background:transparent;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.bnav>div{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border:1px solid var(--line);border-radius:26px;box-shadow:0 8px 24px rgba(217,79,132,.18);padding:4px}
+.bnav button{position:relative;background:none;border:0;border-radius:22px;padding:7px 4px 8px;font:600 12.5px var(--f-body);color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.bnav svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bnav button[aria-selected="true"]{color:var(--accent);background:var(--accent-soft)}
+.bnav .dot{position:absolute;top:5px;left:calc(50% + 8px);min-width:17px;height:17px;border-radius:9px;background:var(--crit);color:#fff;font:600 11px var(--f-mono);display:grid;place-items:center;padding:0 4px}
+.reco{border:2px dashed var(--accent-2);background:var(--accent-soft);border-radius:20px;padding:14px 16px;margin-block:4px 14px}
+.reco.is-crit{border-color:var(--crit);background:var(--crit-soft)}
+.reco .k{font-size:13px;color:var(--accent);font-weight:600}
+.reco.is-crit .k{color:var(--crit)}
+.reco .big{font:700 40px var(--f-mono);color:var(--accent);line-height:1.15;font-variant-numeric:tabular-nums;margin-top:2px}
+.reco .big small{font-size:14px;color:var(--muted);font-weight:500;margin-left:4px}
+.reco .s{font-size:13px;color:var(--muted)}
+.reco ul{margin:10px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
+.reco li{margin:2px 0}
+.cmp{margin-top:12px;padding:10px 14px;border-radius:16px;font-size:14px;background:var(--surface);border:1px solid var(--line)}
+.cmp b{display:block;font-size:14.5px}
+.cmp.ok b{color:var(--ok)} .cmp.crit b{color:var(--crit)}
+.cmp .row{margin-top:8px}
+.addpt{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;border:0;border-radius:999px;padding:8px 13px 8px 9px;min-height:40px;background:linear-gradient(135deg,var(--accent-2),var(--accent));color:#fff;font:600 13.5px var(--f-body);cursor:pointer;box-shadow:0 3px 10px rgba(217,79,132,.3)}
+.addpt span{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.3);font-size:17px;line-height:1}
+@media (max-width:420px){.pt .pill{display:none}.pt select{max-width:150px}}
+.fdar{width:100%;min-height:260px;margin-top:10px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--sunk);color:var(--ink);font:14px/1.6 var(--f-body);resize:vertical}
+.hero{position:relative;overflow:hidden;border-radius:26px;padding:20px 20px 18px;background:radial-gradient(circle at 92% 8%,rgba(255,255,255,.55) 0 46px,transparent 47px),radial-gradient(circle at 78% 98%,rgba(255,255,255,.35) 0 64px,transparent 65px),linear-gradient(140deg,#ffb3cc 0%,#ffcfe0 48%,#ffe4d3 100%);color:#4a2a3b;box-shadow:var(--shadow)}
+.hero-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font:600 11px var(--f-body);letter-spacing:.08em}
+.hero-eye{color:#b23a6c}
+.hero-date{color:#6b4558}
+.hero h1{font:400 27px/1.25 var(--f-display);margin:10px 0 6px;text-wrap:balance}
+.hero p{margin:0;font-size:13.5px;color:#6b4558;max-width:36ch}
+.hero-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.hero-stats span{background:rgba(255,255,255,.7);border-radius:14px;padding:6px 12px;font-size:12.5px;color:#6b4558}
+.hero-stats b{display:block;font:700 19px var(--f-body);color:#b23a6c;line-height:1.2}
+.credit{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:8px 14px 8px 10px;border-radius:999px;background:#fff;color:#6b4558;font-size:13.5px;box-shadow:0 3px 10px rgba(178,58,108,.18)}
+.credit svg{width:18px;height:18px;fill:#f26b9a}
+.credit b{color:#b23a6c}
+.tap{cursor:pointer}
+.tap:active{filter:brightness(1.15)}
+.setline{margin-top:12px;padding:12px 14px;border-radius:16px;background:var(--sunk);border:1px solid var(--line);font-size:15px;line-height:1.7}
+.setline b{font-size:17px}
+.phase{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+body[data-mode="crit"] .m-std{display:none!important}
+body:not([data-mode="crit"]) .m-crit{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 5c6 8 11 13.5 11 19.5A11 11 0 0 1 9 24.5C9 18.5 14 13 20 5z" fill="#ff8fb6"/><path d="M20 5c6 8 11 13.5 11 19.5A11 11 0 0 1 20 35.5z" fill="#f26b9a"/><circle cx="16.5" cy="25" r="1.6" fill="#4a2a3b"/><circle cx="23.5" cy="25" r="1.6" fill="#4a2a3b"/><path d="M17.5 29q2.5 2 5 0" stroke="#4a2a3b" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="13.5" cy="28" r="1.8" fill="#ffd0de"/><circle cx="26.5" cy="28" r="1.8" fill="#ffc0d3"/></svg><div>PFM-HD<small>ระบบโดย ดรุณี กมลสินธุ์</small></div></div>
+    <div class="pt">
+      <span class="pill p-info m-crit">นอนเปล</span>
+      <select id="ptSel" aria-label="เลือกผู้ป่วย"></select>
+      <button class="addpt" id="addPt" type="button" aria-label="เพิ่มผู้ป่วยใหม่"><span>+</span>ผู้ป่วยใหม่</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="sample" id="sampleNote">ข้อมูลที่เห็นเป็น<b>ตัวอย่าง</b> · ข้อมูลเก็บในเครื่องนี้เท่านั้น ใช้รหัสผู้ป่วยแทนชื่อ</div>
+
+  <!-- ===== ก่อนฟอก ===== -->
+  <section data-panel="pre" class="stack">
+    <div class="hero">
+      <div class="hero-top"><span class="hero-eye">PRECISION FLUID MANAGEMENT · HD</span><span class="hero-date" id="heroDate"></span></div>
+      <h1>ดึงน้ำอย่างปลอดภัย<br>ทุกรอบการฟอกเลือด</h1>
+      <p>ประเมิน → คำนวณ UF → แจ้งเตือน → บันทึก FIE ในหน้าเดียว ออกแบบมาเพื่อผู้ป่วยนอนเปล ICU/IPD</p>
+      <div class="hero-stats" id="heroStats"></div>
+      <div class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 6.6L21 9l-5.4 4 2 6.8L12 15.9 6.4 19.8l2-6.8L3 9l6.8-.4z"/></svg><span>สร้างระบบโดย <b>ดรุณี กมลสินธุ์</b></span></div>
+    </div>
+    <div class="panel">
+      <div class="seg" id="ctx">
+        <button type="button" data-ctx="std">นั่ง / ชั่งน้ำหนักได้<small>ใช้น้ำหนักคำนวณ</small></button>
+        <button type="button" data-ctx="crit">นอนเปล ICU / IPD<small>ไม่ต้องชั่งน้ำหนัก</small></button>
+      </div>
+      <div class="q" id="grpQ" style="margin-top:10px" aria-label="กลุ่มผู้ป่วย">
+        <button type="button" data-g="ESRD">ESRD</button><button type="button" data-g="AKI">AKI</button><button type="button" data-g="AKI on CKD">AKI on top of CKD</button>
+      </div>
+      <p class="summ" id="ptSumm"></p>
+      <details class="more" id="ptMore">
+        <summary>ข้อมูลผู้ป่วยและปัจจัยเสี่ยง</summary>
+        <div>
+          <div class="fields">
+            <label class="f"><span>รหัสผู้ป่วย / HN</span><input id="p_hn" type="text" autocomplete="off"></label>
+            <label class="f"><span>กลุ่ม</span><select id="p_group"><option>ESRD</option><option>AKI</option><option value="AKI on CKD">AKI on top of CKD</option></select></label>
+            <label class="f"><span>อายุ (ปี)</span><input id="p_age" type="number" inputmode="numeric"></label>
+            <label class="f m-std"><span>น้ำหนักแห้ง (kg)</span><input id="p_dry" type="number" step="0.1" inputmode="decimal"></label>
+          </div>
+          <div class="m-crit">
+            <div class="sub">น้ำหนักอ้างอิง (ไม่บังคับ)</div>
+            <div class="q" id="refSrc">
+              <button type="button" data-src="none">ไม่มีน้ำหนัก</button>
+              <button type="button" data-src="chart">จากเวชระเบียน</button>
+              <button type="button" data-src="ibw">ประมาณจากความยาวลำตัว</button>
+            </div>
+            <div class="fields" style="margin-top:10px">
+              <label class="f" id="refChart"><span>น้ำหนักล่าสุดในเวชระเบียน (kg)</span><input id="p_refW" type="number" step="0.1" inputmode="decimal"></label>
+              <label class="f" id="refH"><span>ความยาวลำตัวบนเตียง (cm)</span><input id="p_height" type="number" inputmode="numeric"></label>
+              <label class="f" id="refSex"><span>เพศ</span><select id="p_sex"><option value="m">ชาย</option><option value="f">หญิง</option></select></label>
+            </div>
+            <p class="note" id="refNote"></p>
+          </div>
+          <div class="sub">ปัจจัยเสี่ยงความดันต่ำระหว่างฟอก</div>
+          <div class="checks" id="risks"></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <div class="step"><b>1</b><div><h3><span class="m-crit">ความดันและยา</span><span class="m-std">น้ำหนักและความดัน</span> <span class="pill p-info" style="vertical-align:3px">เริ่มตรงนี้</span></h3><small>PATIENT ASSESSMENT</small></div></div>
+      <div class="fields">
+        <label class="f m-std"><span>น้ำหนักก่อนฟอก (kg)</span><input id="d_preW" type="number" step="0.1" inputmode="decimal"></label>
+        <label class="f m-std"><span>หลังฟอกครั้งก่อน (kg)</span><input id="d_lastPostW" type="number" step="0.1" inputmode="decimal"></label>
+        <label class="f"><span>SBP</span><input id="d_sbp" type="number" inputmode="numeric"></label>
+        <label class="f"><span>DBP</span><input id="d_dbp" type="number" inputmode="numeric"></label>
+        <div class="f wide m-crit"><span><b>Norepinephrine</b> ความเข้มข้น (mg : mL)</span>
+          <div class="q" id="neConc"><button type="button" data-c="none">ไม่ได้ยา</button><button type="button" data-c="4/100">4 : 100</button><button type="button" data-c="4/250">4 : 250</button><button type="button" data-c="8/100">8 : 100</button></div>
+          <div id="neRateWrap" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><input id="d_neRate" type="number" step="0.5" inputmode="decimal" placeholder="rate" aria-label="NE rate mL/hr" style="max-width:140px"><span>mL/hr</span></div>
+          <p class="note" id="neCalc" style="margin:0"></p></div>
+      </div>
+      <div class="sub">อาการที่พบ (แตะเลือก ถ้ามี)</div>
+      <div class="checks" id="signs"></div>
+      <details class="more m-crit" id="critMore">
+        <summary>ข้อมูลเพิ่มเติม ถ้ามี</summary>
+        <div class="fields">
+          <label class="f"><span>SpO₂ (%)</span><input id="d_spo2" type="number" inputmode="numeric"></label>
+          <label class="f"><span>FiO₂ (%)</span><input id="d_fio2" type="number" step="5" inputmode="numeric"></label>
+          <label class="f"><span>PEEP</span><input id="d_peep" type="number" inputmode="numeric"></label>
+          <label class="f"><span>Lactate</span><input id="d_lactate" type="number" step="0.1" inputmode="decimal"></label>
+          <label class="f"><span>I/O 24 ชม. (mL)<br><small>น้ำเข้า − น้ำออก, + = เกิน</small></span><input id="d_bal24" type="number" step="50" inputmode="numeric"></label>
+
+        </div>
+      </details>
+      <div id="assessOut" hidden></div>
+    </div>
+
+    <div class="panel">
+      <div class="step"><b>2</b><div><h3><span class="m-crit">เวลาฟอกและน้ำที่ผู้ป่วยได้รับ</span><span class="m-std">เวลาฟอก</span></h3><small>UF CALCULATOR</small></div></div>
+      <div class="fields">
+        <div class="f wide"><span><b>เวลาฟอก (ชม.)</b></span>
+          <div class="q" data-for="d_hours"><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button><button type="button" data-v="4">4</button><button type="button" data-other>อื่นๆ</button></div>
+          <input id="d_hours" type="number" step="0.5" inputmode="decimal" aria-label="เวลาฟอก"></div>
+        <label class="f m-crit"><span><b>ยา drip อื่น + อาหารทางสาย</b> (mL/hr) ไม่ต้องรวม NE</span><input id="d_infRate" type="number" step="5" inputmode="numeric" placeholder="0 ถ้าไม่มี"></label>
+      </div>
+      <div class="f wide" style="margin-top:12px"><span><b>สารกันเลือดแข็ง</b></span>
+        <div class="q" id="acQ"><button type="button" data-ac="nohep">Non-heparin (flush NSS)</button><button type="button" data-ac="hep">Heparin</button></div>
+        <div class="checks" style="margin-top:8px"><label class="chk"><input type="checkbox" id="primeAV">Priming สายคู่ A, V (+NSS 200 mL)</label></div>
+      </div>
+      <p class="note" id="flushNote"></p>
+      <details class="more"><summary class="m-crit">เปลี่ยนวิธีฟอก (IHD / SLED)</summary>
+        <div class="fields">
+          
+          <label class="f m-crit"><span>วิธีการฟอก</span><select id="d_modality"><option value="IHD">IHD</option><option value="SLED">SLED/PIRRT</option><option value="IUF">Isolated UF</option></select></label>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <div class="step"><b>3</b><div><h3>คำตอบ: ดึงน้ำได้เท่าไหร่</h3><small>RECOMMENDATION</small></div></div>
+      <div class="reco" id="recoOut"></div>
+      <div class="fields">
+        <div class="f wide m-crit"><span><b>เป้าที่แพทย์สั่ง (mL)</b> ใส่เพื่อเทียบ</span>
+          <div class="q" data-for="d_netRemove"><button type="button" data-v="500">500</button><button type="button" data-v="1000">1000</button><button type="button" data-v="1500">1500</button><button type="button" data-v="2000">2000</button><button type="button" data-v="2500">2500</button></div>
+          <input id="d_netRemove" type="number" step="100" inputmode="numeric" aria-label="เป้าที่แพทย์สั่ง"></div>
+        <label class="f m-std"><span><b>น้ำหนักเป้าหมายที่แพทย์สั่ง (kg)</b></span><input id="d_targetW" type="number" step="0.1" inputmode="decimal"></label>
+      </div>
+      <div id="cmpOut"></div>
+      <div class="setline" id="calcOut"></div>
+      <details class="more"><summary>ดูวิธีคำนวณ</summary><div class="formula" id="formula"></div></details>
+    </div>
+
+    <div class="panel">
+      <div class="step"><b>4</b><div><h3>สิ่งที่ต้องระวัง แล้วบันทึก</h3><small>CLINICAL ALERT</small></div></div>
+      <div class="alerts" id="alertList"></div>
+      <details class="more" id="infoMore" hidden><summary id="infoSum"></summary><div class="alerts" id="infoList"></div></details>
+      <label class="f" style="margin-top:14px;max-width:200px"><span>วันที่ฟอก</span><input id="d_date" type="date"></label>
+      <div class="stack" style="margin-top:14px;gap:8px">
+        <button class="btn primary block" id="saveSession">บันทึก แล้วไปบันทึกระหว่างฟอก</button>
+        <button class="btn ghost block" id="copyResult">คัดลอกบันทึกทางการพยาบาล (FIE)</button>
+        <details class="more" style="margin-top:0"><summary>ดูบันทึก FIE ก่อนคัดลอก</summary><div><textarea class="fdar" id="fdarPre" readonly></textarea></div></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ระหว่างฟอก ===== -->
+  <section data-panel="mon" class="stack" hidden>
+    <div><h2>ระหว่างฟอก</h2><p class="lead"><span class="m-std">บันทึกทุก 30–60 นาที</span><span class="m-crit">ผู้ป่วยนอนเปลควรบันทึก BP ทุก 15–30 นาที</span> ระบบติดป้าย IDH ให้อัตโนมัติ</p></div>
+    <div class="panel">
+      <div class="fields">
+        <label class="f" style="grid-column:1/-1"><span>รอบการฟอก</span><select id="m_session"></select></label>
+        <label class="f m-std"><span>น้ำหนักหลังฟอก (kg)</span><input id="m_postW" type="number" step="0.1" inputmode="decimal"></label>
+      </div>
+      <div id="monBanner"></div>
+      <div id="monSummary"></div>
+    </div>
+    <div class="panel" id="addPanel">
+      <h3 style="margin-bottom:12px">เพิ่มบันทึก</h3>
+      <div class="fields">
+        <div class="f wide"><span><b>เวลาหลังเริ่มฟอก</b></span>
+          <div class="q" id="mtQ"><button type="button" data-m="30">30 นาที</button><button type="button" data-m="60">1 ชม.</button><button type="button" data-m="120">2 ชม.</button><button type="button" data-m="180">3 ชม.</button><button type="button" data-m="other">อื่นๆ</button></div>
+          <input id="m_t" type="text" inputmode="decimal" placeholder="ชม.:นาที เช่น 1:30" hidden style="max-width:200px"></div>
+        <label class="f"><span>SBP</span><input id="m_sbp" type="number" inputmode="numeric"></label>
+        <label class="f"><span>DBP</span><input id="m_dbp" type="number" inputmode="numeric"></label>
+        <label class="f"><span>ชีพจร</span><input id="m_hr" type="number" inputmode="numeric"></label>
+        <label class="f m-crit"><span>NE rate (mL/hr)</span><input id="m_ne" type="number" step="0.5" inputmode="decimal"></label>
+        <label class="f m-crit"><span>SpO₂</span><input id="m_spo2" type="number" inputmode="numeric"></label>
+        <label class="f"><span>UF สะสม (mL)</span><input id="m_uf" type="number" step="50" inputmode="numeric"></label>
+      </div>
+      <div class="sub">อาการ / การพยาบาล</div>
+      <div class="checks" id="m_sym"></div>
+      <label class="f" style="margin-top:12px"><span>หมายเหตุ</span><input id="m_note" type="text"></label>
+      <button class="btn primary block" id="addMon" style="margin-top:14px">เพิ่มบันทึก</button>
+    </div>
+    <div class="panel"><h3 style="margin-bottom:10px">บันทึกรอบนี้</h3><div id="monTable"></div></div>
+    <div class="panel">
+      <h3>บันทึกทางการพยาบาล FIE</h3>
+      <p class="note" style="margin-top:4px">เติมส่วน E (Evaluation) จากข้อมูลระหว่างฟอกให้อัตโนมัติ</p>
+      <textarea class="fdar" id="fdarMon" readonly></textarea>
+      <button class="btn primary block" id="copyFdar" style="margin-top:10px">คัดลอกบันทึก FIE</button>
+      <button class="btn ghost block" id="gsSendOne" type="button" style="margin-top:8px">ส่งรอบนี้เข้า Google Sheet</button>
+      <p class="note" id="gsOne" style="text-align:center"></p>
+    </div>
+  </section>
+
+  <!-- ===== แนวโน้ม ===== -->
+  <section data-panel="trend" class="stack" hidden>
+    <div><h2>แนวโน้มการดึงน้ำ</h2><p class="lead" id="trendLead"></p></div>
+    <div class="panel chart"><h3 id="ch1Title" style="margin-bottom:8px"></h3><div id="ch1"></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>ค่ารายครั้ง</span><span><i style="background:var(--warn)"></i>เฝ้าระวัง</span><span><i style="background:var(--crit)"></i>เสี่ยงสูง</span><span><i style="background:var(--crit);border-radius:50%"></i>เกิด IDH</span></div></div>
+    <div class="panel chart"><h3 id="ch2Title" style="margin-bottom:8px"></h3><div id="ch2"></div></div>
+    <div class="panel"><h3 style="margin-bottom:10px">ประวัติรอบการฟอก</h3><div id="trendTable"></div></div>
+  </section>
+
+  <!-- ===== รายงาน ===== -->
+  <section data-panel="dash" class="stack" hidden>
+    <div><h2>เปรียบเทียบก่อน–หลังการพัฒนา</h2><p class="lead">RESEARCH DASHBOARD · รวมทุกผู้ป่วยในเครื่องนี้</p></div>
+    <div class="panel phase">
+      <span style="font-weight:600">ช่วงที่กำลังเก็บข้อมูล</span>
+      <div class="q" id="phaseSel"><button type="button" data-ph="pre">ก่อนพัฒนา</button><button type="button" data-ph="post">หลังพัฒนา</button></div>
+      <span class="note" style="margin:0;flex-basis:100%">รอบการฟอกที่บันทึกใหม่จะนับอยู่ในช่วงนี้</span>
+    </div>
+    <div class="panel">
+      <div class="q" id="dashGrp" style="margin-bottom:12px"><button type="button" data-g="all">ทั้งหมด</button><button type="button" data-g="std">นั่ง/ชั่งได้</button><button type="button" data-g="crit">นอนเปล ICU/IPD</button></div>
+      <div id="dashTable"></div>
+    </div>
+    <div class="panel chart"><h3 style="margin-bottom:8px">ตัวชี้วัดหลัก</h3><div id="chDash"></div>
+      <div class="legend"><span><i style="background:var(--muted)"></i>ก่อนพัฒนา</span><span><i style="background:var(--accent)"></i>หลังพัฒนา</span></div></div>
+    <div class="panel">
+      <h3>ส่งข้อมูลเข้า Google Sheet</h3>
+      <p class="note" style="margin-top:4px">วางลิงก์ Web app ของ Google Apps Script ครั้งเดียวต่อเครื่อง แอปจะส่งข้อมูลทุกครั้งที่บันทึกแผนหรือบันทึกระหว่างฟอก ข้อมูลตัวอย่างจะไม่ถูกส่ง</p>
+      <label class="f" style="margin-top:10px"><span>ลิงก์ Web app (https://script.google.com/macros/s/…/exec)</span><input id="gsUrl" type="url" inputmode="url" autocomplete="off" placeholder="วางลิงก์ที่นี่"></label>
+      <p class="note" id="gsStatus"></p>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="gsSendAll" type="button">ส่งรอบที่ยังไม่ส่ง</button></div>
+    </div>
+    <div class="panel">
+      <h3>ส่งออกข้อมูล</h3>
+      <p class="note" style="margin-top:4px">คัดลอกทุกรอบการฟอกเป็น CSV แล้ววางใน Excel หรือ Google Sheets</p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="copyCsv">คัดลอก CSV</button>
+        <button class="btn ghost" id="askClear">ลบข้อมูลทั้งหมด</button>
+        <span class="confirm" id="clearConfirm" hidden>ลบข้อมูลทั้งหมดในเครื่องนี้?
+          <button class="btn sm" id="doClear" style="color:var(--crit)">ลบ</button>
+          <button class="btn sm" id="cancelClear">ยกเลิก</button></span>
+      </div>
+      <textarea id="csvBox" hidden readonly style="width:100%;height:120px;margin-top:10px;font:12px var(--f-mono);background:var(--sunk);color:var(--ink);border:1px solid var(--line);border-radius:8px"></textarea>
+    </div>
+    <div class="panel">
+      <details class="more" style="border:0;margin:0;padding:0">
+        <summary>เกณฑ์แจ้งเตือนของหน่วยงาน</summary>
+        <div>
+          <div class="sub" style="margin-top:0">ใช้ทุกกลุ่ม</div>
+          <div class="fields">
+            <label class="f"><span>UFR เฝ้าระวัง (mL/kg/hr)</span><input id="s_ufrWarn" type="number" step="0.5"></label>
+            <label class="f"><span>UFR เสี่ยงสูง (mL/kg/hr)</span><input id="s_ufrHigh" type="number" step="0.5"></label>
+            <label class="f"><span>SBP ลดลง ≥ = IDH</span><input id="s_sbpDrop" type="number"></label>
+          </div>
+          <div class="sub">การลดเพดานดึงน้ำที่แนะนำ</div>
+          <div class="fields">
+            <label class="f"><span>ระดับเฝ้าระวัง เหลือ (%)</span><input id="s_capMild" type="number" step="5"></label>
+            <label class="f"><span>ระดับเสี่ยงสูง เหลือ (%)</span><input id="s_capSevere" type="number" step="5"></label>
+            <label class="f"><span>ปัจจัยเสี่ยง IDH ≥ 3 ข้อ คูณ (%)</span><input id="s_capRisk" type="number" step="5"></label>
+          </div>
+          <p class="note">เฝ้าระวัง = NE ≥ ค่าเฝ้าระวัง, MAP ต่ำกว่าเกณฑ์ไม่เกิน 10 mmHg, lactate &gt; 2 · เสี่ยงสูง = NE ≥ ค่าสูง, ยากระตุ้นความดัน ≥ 2 ชนิด, lactate ≥ ค่าสูง, SBP ต่ำกว่าเกณฑ์ · MAP ต่ำกว่าเกณฑ์ = ไม่แนะนำให้ดึงน้ำ</p>
+          <div class="sub">นั่ง / ชั่งน้ำหนักได้</div>
+          <div class="fields">
+            <label class="f"><span>IDWG เฝ้าระวัง (%)</span><input id="s_idwgWarn" type="number" step="0.5"></label>
+            <label class="f"><span>SBP ต่ำกว่า</span><input id="s_sbpLow" type="number"></label>
+            <label class="f"><span>SBP สูงกว่า</span><input id="s_sbpHigh" type="number"></label>
+            <label class="f"><span>SBP ระหว่างฟอก &lt; = IDH</span><input id="s_sbpIdh" type="number"></label>
+            <label class="f"><span>น้ำหนักที่ใช้หาร UFR</span><select id="s_basis"><option value="target">เป้าหมาย/หลังฟอก</option><option value="pre">ก่อนฟอก</option></select></label>
+          </div>
+          <div class="sub">นอนเปล ICU / IPD</div>
+          <div class="fields">
+            <label class="f"><span>Flush ต่อครั้ง (mL) ทุก 1 ชม.</span><input id="s_flushVol" type="number" step="50"></label>
+            <label class="f"><span>Priming สายคู่ A, V (mL)</span><input id="s_primeVol" type="number" step="50"></label>
+            <label class="f"><span>UF rate เฝ้าระวัง (mL/hr) เมื่อไม่มีน้ำหนัก</span><input id="s_ufRateWarn" type="number" step="25"></label>
+            <label class="f"><span>UF rate เสี่ยงสูง (mL/hr)</span><input id="s_ufRateHigh" type="number" step="25"></label>
+            <label class="f"><span>MAP ต่ำกว่า</span><input id="s_mapLow" type="number"></label>
+            <label class="f"><span>NE เฝ้าระวัง</span><input id="s_neWarn" type="number" step="0.01"></label>
+            <label class="f"><span>NE สูง</span><input id="s_neHigh" type="number" step="0.01"></label>
+            <label class="f"><span>Lactate สูง</span><input id="s_lacHigh" type="number" step="0.5"></label>
+            <label class="f"><span>I/O 24 ชม. เกิน (mL)</span><input id="s_io24Warn" type="number" step="100"></label>
+            <label class="f"><span>Fluid overload สูง (%)</span><input id="s_foHigh" type="number"></label>
+            <label class="f"><span>FiO₂ สูง (%)</span><input id="s_fio2Warn" type="number" step="5"></label>
+            <label class="f"><span>PEEP สูง</span><input id="s_peepWarn" type="number"></label>
+            <label class="f"><span>SpO₂ ต่ำกว่า</span><input id="s_spo2Low" type="number"></label>
+          </div>
+          <p class="note">ค่าเริ่มต้น: UFR &lt; 13 mL/kg/hr (KDOQI 2015), MAP ≥ 65 (Surviving Sepsis Campaign), FO ≥ 10% สัมพันธ์กับอัตราตายใน AKI วิกฤต · UF rate 500/650 mL/hr เทียบได้กับ 10/13 mL/kg/hr ที่น้ำหนัก 50 kg ปรับให้ตรงกับเกณฑ์ที่หน่วยงานรับรอง</p>
+        </div>
+      </details>
+    </div>
+  </section>
+</main>
+
+<nav class="bnav" role="tablist" id="tabs"><div>
+  <button role="tab" data-tab="pre"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>ก่อนฟอก<span class="dot" id="alertDot" hidden></span></button>
+  <button role="tab" data-tab="mon"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>ระหว่างฟอก</button>
+  <button role="tab" data-tab="trend"><svg viewBox="0 0 24 24"><path d="M4 19h16M5 15l4-4 4 3 6-7"/></svg>แนวโน้ม</button>
+  <button role="tab" data-tab="dash"><svg viewBox="0 0 24 24"><path d="M5 19V10M10 19V5M15 19v-7M20 19v-4"/></svg>รายงาน</button>
+</div></nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const LS='pfmhd.v1';
+const SIGNS=[['crackles','Crepitation ที่ปอด','a'],['edema','บวมกดบุ๋ม ≥ 2+','a'],['dyspnea','หอบเหนื่อย/นอนราบไม่ได้','s'],['dizzy','เวียนศีรษะ/อ่อนเพลีย','s'],
+  ['cxr','CXR มี congestion','c'],['vaso2','ได้ยากระตุ้นความดัน > 1 ตัว','c'],['mottle','Cyanosis','c']];
+const RISKS=[['age','อายุ ≥ 65 ปี','a'],['dm','เบาหวาน','a'],['chf','หัวใจล้มเหลว/EF ต่ำ','a'],['idhHx','เคยเกิด IDH','a'],['alb','Albumin < 3.5','a'],['anemia','Hb < 9','a'],
+  ['antiHT','ได้ยาลดความดันก่อนฟอก','s'],['newHD','เริ่มฟอก < 3 เดือน','s'],['sepsis','Sepsis/Septic shock','c'],['mv','On ETT/เครื่องช่วยหายใจ','c'],['sedat','ได้ยา sedation','c'],['arrhyHx','AF/หัวใจเต้นผิดจังหวะ','c']];
+const SYMS=[['hypo','ความดันต่ำ/มีอาการ','a'],['ns','ให้ NSS bolus','a'],['ufStop','ลด/หยุด UF','a'],['cramp','ตะคริว','s'],['nausea','คลื่นไส้/อาเจียน','s'],['chest','เจ็บหน้าอก','s'],
+  ['neUp','เพิ่ม/เริ่มยากระตุ้นความดัน','c'],['desat','SpO₂ ลดลง','c'],['arrhy','หัวใจเต้นผิดจังหวะ','c']];
+const MOD={IHD:'IHD',SLED:'SLED/PIRRT',IUF:'Isolated UF'};
+const SRC={none:'ไม่มีน้ำหนัก',chart:'จากเวชระเบียน',ibw:'ประมาณจากความยาวลำตัว'};
+const DEF_SET={ufrWarn:10,ufrHigh:13,idwgWarn:4,sbpLow:100,sbpHigh:180,sbpDrop:20,sbpIdh:90,basis:'target',
+  ufRateWarn:500,ufRateHigh:650,mapLow:65,neWarn:0.1,neHigh:0.2,lacHigh:4,io24Warn:1000,foHigh:10,fio2Warn:60,peepWarn:10,spo2Low:92,capMild:75,flushVol:200,primeVol:200,capSevere:50,capRisk:85};
+const SET_KEYS=['ufrWarn','ufrHigh','idwgWarn','sbpLow','sbpHigh','sbpDrop','sbpIdh','ufRateWarn','ufRateHigh','mapLow','neWarn','neHigh','lacHigh','io24Warn','foHigh','fio2Warn','peepWarn','spo2Low','capMild','flushVol','primeVol','capSevere','capRisk'];
+const n0=v=>has(v)?Math.round(+v).toLocaleString('en-US'):'–';
+const DRAFT_KEYS=['preW','lastPostW','targetW','hours','netFluid','sbp','dbp','hr','cumBal','bal24','urine','netRemove','infRate','neRate','fio2','peep','spo2','lactate','modality'];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const has=v=>v!==''&&v!=null&&isFinite(+v);
+const fmt=(v,d=1)=>has(v)?Number(v).toFixed(d):'–';
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const mcls=t=>t==='s'?' m-std':t==='c'?' m-crit':'';
+const mapOf=(s,d)=>(+s>0&&+d>0)?(+s+2*+d)/3:null;
+const maxUf=s=>(s.mon||[]).reduce((m,x)=>Math.max(m,+x.uf||0),0);
+function refWOf(p){if(!p||!p.crit)return null;
+  if(p.refSrc==='chart')return +p.refW>0?+p.refW:null;
+  if(p.refSrc==='ibw'){const h=+p.height;return h>100?+(((p.sex==='f')?45.5:50)+0.91*(h-152.4)).toFixed(1):null}
+  return null}
+
+/* ---------- sample data ---------- */
+function seedStd(){
+  let r=7;const rnd=()=>((r=(r*9301+49297)%233280)/233280);
+  const pts=[{id:'p1',hn:'ตัวอย่าง-001',group:'ESRD',dry:63,age:68,risks:['age','dm','antiHT']},
+             {id:'p2',hn:'ตัวอย่าง-002',group:'ESRD',dry:54.5,age:52,risks:['idhHx']}];
+  const ses=[];const base=new Date('2026-07-06');
+  pts.forEach((p,pi)=>{for(let i=0;i<16;i++){
+    const phase=i<8?'pre':'post',dt=new Date(base.getTime()+(i*3.5+pi)*864e5).toISOString().slice(0,10);
+    const gain=phase==='pre'?1.8+rnd()*1.8:1.4+rnd()*1.3,lastPost=p.dry+(rnd()-.4)*.6,preW=+(lastPost+gain).toFixed(1);
+    const hours=phase==='pre'?4:(gain>2.4?4.5:4),targetW=phase==='pre'?p.dry:+(Math.max(p.dry,preW-hours*p.dry*0.0115)).toFixed(1),sbp=Math.round(130+rnd()*30);
+    const s={id:uid(),pid:p.id,date:dt,phase,preW,lastPostW:+lastPost.toFixed(1),targetW,hours,netFluid:200,sbp,dbp:Math.round(70+rnd()*15),hr:Math.round(72+rnd()*14),signs:[],sample:true};
+    const c=calc(s),idh=(phase==='pre'&&c.ufr>12&&rnd()>.3)||rnd()>.9;
+    s.mon=[60,120,180,240].map((t,k)=>({t,sbp:Math.round(sbp-(k+1)*(idh&&k===2?14:4)-rnd()*6),dbp:Math.round(s.dbp-k*2),hr:s.hr+k*2,uf:Math.round(c.vol*(t/(hours*60))),sym:idh&&k===2?['hypo','ns','ufStop']:[],note:idh&&k===2?'ลด UF rate, NSS 100 mL':''}));
+    s.postW=+(targetW+(idh?.4:.1)).toFixed(1);ses.push(s)}});
+  return {pts,ses};
+}
+function seedCrit(){
+  let r=11;const rnd=()=>((r=(r*9301+49297)%233280)/233280);
+  const pt={id:'p3',hn:'ตัวอย่าง-ICU-003',group:'AKI',crit:true,refSrc:'none',age:71,risks:['age','sepsis','mv','alb']};
+  const ses=[];const base=new Date('2026-07-07');let cum=9500;
+  for(let i=0;i<10;i++){
+    const phase=i<5?'pre':'post',sled=phase==='post',hours=sled?6:4,dt=new Date(base.getTime()+i*2*864e5).toISOString().slice(0,10);
+    const netRemove=sled?1800+Math.round(rnd()*4)*100:2400+Math.round(rnd()*4)*100,ne=+(0.04+rnd()*0.08).toFixed(2),sbp=Math.round(110+rnd()*20),dbp=Math.round(55+rnd()*10);
+    const s={id:uid(),pid:'p3',date:dt,phase,crit:true,refW:null,refSrc:'none',cumBal:cum,bal24:Math.round(300+rnd()*700),urine:Math.round(100+rnd()*300),
+      netRemove,infRate:sled?60:80,modality:sled?'SLED':'IHD',hours,netFluid:200,sbp,dbp,hr:Math.round(95+rnd()*15),ne,neConc:'4/100',neRate:+(ne*50*60/40).toFixed(1),fio2:sled?40:50,peep:sled?6:8,spo2:95,lactate:+(1.5+rnd()*1.2).toFixed(1),signs:['crackles','cxr','edema'],sample:true};
+    const c=calc(s),idh=(!sled&&rnd()>.25)||rnd()>.85;s.mon=[];
+    for(let k=1;k<=hours;k++){const bad=idh&&k===Math.ceil(hours/2);
+      s.mon.push({t:k*60,sbp:Math.round(sbp-k*3-(bad?22:0)-rnd()*5),dbp:Math.round(dbp-k-(bad?8:0)),hr:s.hr+k*2+(bad?12:0),uf:Math.round(c.vol*k/hours*(idh?0.85:1)),neRate:+((bad?ne+0.06:ne)*50*60/40).toFixed(1),spo2:bad?92:95,sym:bad?['hypo','neUp','ufStop']:[],note:bad?'ลด UF rate, เพิ่ม NE, แจ้งแพทย์':''})}
+    s.postW=null;ses.push(s);cum=Math.round(Math.max(1000,cum+s.bal24-netRemove*(idh?0.8:1)));
+  }
+  return {pt,ses};
+}
+const blankDraft=pid=>({pid,date:today(),phase:'post',preW:'',lastPostW:'',targetW:'',hours:4,netFluid:600,sbp:'',dbp:'',hr:'',signs:[],neConc:'none',neRate:'',
+  cumBal:'',bal24:'',urine:'',netRemove:'',infRate:'',modality:'IHD',ne:'',vasoN:'',fio2:'',peep:'',spo2:'',lactate:''});
+function seed(){
+  const a=seedStd(),b=seedCrit();
+  return {patients:[...a.pts,b.pt],sessions:[...a.ses,...b.ses],settings:{...DEF_SET},cur:'p3',tab:'pre',dashGrp:'all',migr3:true,
+    draft:{...blankDraft('p3'),netRemove:1500,infRate:60,sbp:118,dbp:62,hr:102,neConc:'4/100',neRate:4,bal24:800,signs:['crackles','edema']},sample:true};
+}
+function load(){try{const t=localStorage.getItem(LS);return t?JSON.parse(t):null}catch(e){return null}}
+function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+let S=null;S=load()||seed();
+S.settings={...DEF_SET,...S.settings};
+if(!['pre','mon','trend','dash'].includes(S.tab))S.tab='pre';
+if(S.sample&&!S.patients.some(p=>p.crit)){const x=seedCrit();S.patients.push(x.pt);S.sessions.push(...x.ses);S.migr3=true}
+S.patients.forEach(p=>{if(p.crit&&!p.refSrc){if(has(p.admitW)){p.refSrc='chart';p.refW=p.admitW}else p.refSrc='none'}});
+if(S.sample&&!S.migr3){const p3=S.patients.find(p=>p.id==='p3');if(p3){p3.refSrc='none';p3.refW=null;S.sessions.forEach(s=>{if(s.pid==='p3'){delete s.estW;s.refW=null}})}S.migr3=true}
+if(S.draft.neConc===undefined){S.draft.neConc=+S.draft.ne>0?'4/100':'none';S.draft.neRate=+S.draft.ne>0?+(S.draft.ne*50*60/40).toFixed(1):''}
+if(+S.draft.edema>=2&&!(S.draft.signs||[]).includes('edema')){S.draft.signs=[...(S.draft.signs||[]),'edema']}
+
+const P=()=>S.patients.find(p=>p.id===S.cur)||S.patients[0];
+const CONC={'4/100':40,'4/250':16,'8/100':80};
+const FV=()=>(S&&S.settings&&+S.settings.flushVol>0)?+S.settings.flushVol:200;
+const PV=()=>(S&&S.settings&&+S.settings.primeVol>=0&&has(S.settings.primeVol))?+S.settings.primeVol:200;
+const isHep=d=>d.anticoag==='hep';
+function flushN(d){return isHep(d)?0:Math.max(0,Math.ceil(+d.hours||0)-1)}
+function primeOf(d){return d.primeAV?PV():0}
+function flushOf(d){return flushN(d)*FV()+primeOf(d)}
+function syncDraft(){const p=P(),d=S.draft;S.cur=p.id;Object.assign(d,{pid:p.id,crit:!!p.crit,refW:refWOf(p),refSrc:p.refSrc||'none'});
+  delete d.flushVol;if(!d.anticoag)d.anticoag='nohep';d.netFluid=flushOf(d);
+  if(d.neConc!==undefined){if(!CONC[d.neConc]){d.ne=0;d.neMcgMin=0}else{const m=(+d.neRate||0)*CONC[d.neConc]/60;d.neMcgMin=m;d.ne=+(m/(d.refW||50)).toFixed(3)}}}
+function updateMode(){document.body.dataset.mode=P().crit?'crit':'std'}
+
+/* ---------- calculation ---------- */
+function calc(d){
+  const st=(S&&S.settings)||DEF_SET,h=+d.hours,net=+d.netFluid||0;
+  if(d.crit){
+    const inf=((+d.infRate||0)+(d.neConc&&d.neConc!=='none'?(+d.neRate||0):0))*h,vol=(+d.netRemove||0)+inf+net,rate=h>0?vol/h:0,w=+d.refW||+d.estW||0;
+    const ufr=w>0?rate/w:null,fo=w>0&&has(d.cumBal)?(+d.cumBal/1000)/w*100:null;
+    return {vol,rate,ufr,basisW:w||null,inf,fo,idwg:null,idwgKg:null,hNeed:vol>0?(w>0?vol/(st.ufrWarn*w):vol/st.ufRateWarn):0};
+  }
+  const pre=+d.preW,tgt=+d.targetW,vol=(pre-tgt)*1000+net,rate=h>0?vol/h:0,basisW=st.basis==='pre'?pre:tgt,ref=+d.lastPostW;
+  return {vol,rate,ufr:basisW>0?rate/basisW:0,basisW,inf:0,fo:null,idwg:ref>0?(pre-ref)/ref*100:null,idwgKg:ref>0?pre-ref:null,hNeed:basisW>0&&vol>0?vol/(st.ufrWarn*basisW):0};
+}
+function ufLevel(c){const s=S.settings;
+  if(c.ufr!=null)return c.ufr>s.ufrHigh?'crit':c.ufr>s.ufrWarn?'warn':'ok';
+  return c.rate>s.ufRateHigh?'crit':c.rate>s.ufRateWarn?'warn':'ok'}
+function riskLevel(n){return n>=3?['สูง','crit']:n>=1?['ปานกลาง','warn']:['ต่ำ','ok']}
+function rowIDH(s,m){
+  const st=S.settings,sym=m.sym||[],drop=s.sbp?s.sbp-m.sbp:0;
+  if(sym.includes('hypo')||sym.includes('neUp')||drop>=st.sbpDrop)return true;
+  if(s.crit){const mm=mapOf(m.sbp,m.dbp);return (mm!=null&&mm<st.mapLow)||(has(m.neRate)&&+m.neRate>(+s.neRate||0)+0.001)||(has(m.ne)&&+m.ne>(+s.ne||0)+0.001)}
+  return m.sbp<st.sbpIdh;
+}
+const isIDH=s=>(s.mon||[]).some(m=>rowIDH(s,m));
+function achieved(s){const c=calc(s);
+  if(s.crit){const u=maxUf(s);return u>0&&c.vol>0?u>=0.9*c.vol:null}
+  return has(s.postW)?Math.abs(s.postW-s.targetW)<=0.5:null}
+
+/* ---------- navigation ---------- */
+function setTab(t){S.tab=t;save();
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t);
+  render();window.scrollTo(0,0)}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.tab)});
+
+/* ---------- patient ---------- */
+function renderPtSel(){$('ptSel').innerHTML=S.patients.map(p=>`<option value="${p.id}"${p.id===S.cur?' selected':''}>${esc(p.hn)}${p.crit?' · นอนเปล':''}</option>`).join('')}
+function loadPatientDefaults(){
+  const p=P(),last=S.sessions.filter(s=>s.pid===p.id).sort((a,b)=>a.date<b.date?1:-1)[0];
+  if(p.crit){S.draft.neConc=last&&last.neConc?last.neConc:(S.draft.neConc||'none');S.draft.modality=last?last.modality||'IHD':'IHD';S.draft.infRate=last&&has(last.infRate)?last.infRate:S.draft.infRate}
+  else{S.draft.lastPostW=last&&has(last.postW)?last.postW:(p.dry||'');S.draft.targetW=p.dry||''}
+}
+$('ptSel').addEventListener('change',e=>{S.cur=e.target.value;syncDraft();loadPatientDefaults();save();updateMode();fillForms();render()});
+$('ctx').addEventListener('click',e=>{const b=e.target.closest('[data-ctx]');if(!b)return;const p=P();p.crit=b.dataset.ctx==='crit';if(p.crit&&!p.refSrc)p.refSrc='none';
+  syncDraft();loadPatientDefaults();save();updateMode();renderPtSel();fillForms();render()});
+$('grpQ').addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b)return;P().group=b.dataset.g;$('p_group').value=b.dataset.g;save();renderPtSel();render()});
+$('refSrc').addEventListener('click',e=>{const b=e.target.closest('[data-src]');if(!b)return;P().refSrc=b.dataset.src;save();render()});
+function renderPatient(){
+  const p=P(),w=refWOf(p);
+  document.querySelectorAll('[data-ctx]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.ctx==='crit')===!!p.crit)));
+  document.querySelectorAll('#grpQ button').forEach(b=>b.classList.toggle('on',b.dataset.g===p.group));
+  const src=p.refSrc||'none';
+  document.querySelectorAll('#refSrc button').forEach(b=>b.classList.toggle('on',b.dataset.src===src));
+  $('refChart').hidden=src!=='chart';$('refH').hidden=src!=='ibw';$('refSex').hidden=src!=='ibw';
+  $('refNote').textContent=src==='none'?'ไม่ต้องใช้น้ำหนัก แอปจะประเมินจาก UF rate (mL/hr), MAP และอาการ แทน UFR ต่อกิโลกรัม'
+    :src==='ibw'?(w?`น้ำหนักประมาณ (Ideal body weight) = ${fmt(w)} kg · วัดจากศีรษะถึงส้นเท้าด้วยสายวัดขณะนอนราบ`:'กรอกความยาวลำตัวเพื่อคำนวณ')
+    :'ใช้น้ำหนักล่าสุดก่อนป่วยหรือแรกรับ ระบุวันที่ชั่งในบันทึกถ้าเป็นไปได้';
+  const nR=(p.risks||[]).length;
+  $('ptSumm').innerHTML=`<b>${esc(p.hn)}</b> · ${esc(p.group==='AKI on CKD'?'AKI on top of CKD':p.group)}${has(p.age)?' · '+p.age+' ปี':''} · ` +
+    (p.crit?`น้ำหนักอ้างอิง: <b>${w?fmt(w)+' kg':'ไม่มี'}</b>${w?' ('+SRC[src]+')':' (ใช้ UF rate)'}`:`น้ำหนักแห้ง <b>${fmt(p.dry)} kg</b>`)+
+    ` · ปัจจัยเสี่ยง ${nR} ข้อ`;
+}
+
+/* ---------- forms ---------- */
+function chips(list,attr,sel){return list.map(([k,l,t])=>`<label class="chk${mcls(t)}"><input type="checkbox" data-${attr}="${k}"${sel.includes(k)?' checked':''}>${l}</label>`).join('')}
+function fillForms(){
+  const d=S.draft,p=P(),st=S.settings;
+  $('d_date').value=d.date||today();
+  DRAFT_KEYS.forEach(k=>{const el=$('d_'+k);if(el)el.value=d[k]??''});
+  if(!d.modality)$('d_modality').value='IHD';
+  $('p_hn').value=p.hn;$('p_group').value=p.group;$('p_dry').value=p.dry??'';$('p_age').value=p.age??'';
+  $('p_refW').value=p.refW??'';$('p_height').value=p.height??'';$('p_sex').value=p.sex||'m';
+  $('signs').innerHTML=chips(SIGNS,'sign',d.signs||[]);
+  $('risks').innerHTML=chips(RISKS,'risk',p.risks||[]);
+  SET_KEYS.forEach(k=>$('s_'+k).value=st[k]);$('s_basis').value=st.basis;
+  $('m_sym').innerHTML=chips(SYMS,'sym',[]);
+}
+function syncQuick(){document.querySelectorAll('.q[data-for]').forEach(q=>{const v=$(q.dataset.for).value,vals=[...q.querySelectorAll('[data-v]')].map(b=>+b.dataset.v);
+  q.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.hasAttribute('data-other')?(!!S.hoursOther||(v!==''&&!vals.includes(+v))):(!S.hoursOther||q.dataset.for!=='d_hours')&&v!==''&&+b.dataset.v===+v))})}
+document.addEventListener('click',e=>{const b=e.target.closest('.q[data-for] button');if(!b)return;
+  const el=$(b.parentElement.dataset.for);
+  if(b.hasAttribute('data-other')){S.hoursOther=true;render();el.hidden=false;el.focus();el.select();return}
+  if(el.id==='d_hours')S.hoursOther=false;
+  el.value=b.dataset.v;el.dispatchEvent(new Event('input',{bubbles:true}))});
+$('acQ').addEventListener('click',e=>{const b=e.target.closest('[data-ac]');if(!b)return;S.draft.anticoag=b.dataset.ac;save();render()});
+$('primeAV').addEventListener('change',e=>{S.draft.primeAV=e.target.checked;save();render()});
+$('neConc').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;S.draft.neConc=b.dataset.c;if(!CONC[b.dataset.c])S.draft.neRate='';
+  save();render();if(CONC[b.dataset.c])$('d_neRate').focus()});
+function renderInputs(){
+  const d=S.draft,c=d.neConc||'none';
+  document.querySelectorAll('#neConc button').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
+  $('neRateWrap').hidden=!CONC[c];
+  $('neCalc').textContent=CONC[c]?(has(d.neRate)?`= ${fmt(d.neMcgMin,1)} mcg/min ≈ ${fmt(d.ne,2)} mcg/kg/min`+(d.refW?` (น้ำหนัก ${fmt(d.refW)} kg)`:' (คิดที่ 50 kg เพราะไม่มีน้ำหนัก)'):'ใส่ rate ที่ให้อยู่ (mL/hr)'):'';
+  const oth=S.hoursOther||![2,3,4].includes(+d.hours);$('d_hours').hidden=!oth;
+  document.querySelector('[data-for="d_hours"] [data-other]').textContent=oth&&has(d.hours)?`อื่นๆ (${d.hours} ชม.)`:'อื่นๆ';
+  const n=Math.max(0,Math.ceil(+d.hours||0)-1);
+  document.querySelectorAll('#acQ button').forEach(b=>b.classList.toggle('on',b.dataset.ac===(d.anticoag||'nohep')));
+  $('primeAV').checked=!!d.primeAV;
+  const fN=flushN(d),parts=[isHep(d)?'Heparin: ไม่ต้อง flush NSS':`Flush NSS ${n0(FV())} mL ทุก 1 ชม. → ${fN} ครั้ง = ${n0(fN*FV())} mL`];
+  if(d.primeAV)parts.push(`Priming สายคู่ A, V +${n0(PV())} mL`);
+  $('flushNote').textContent=parts.join(' · ')+` → รวมชดเชย ${n0(d.netFluid)} mL (หักให้แล้ว)`;
+}
+const PKEY={p_hn:'hn',p_group:'group',p_dry:'dry',p_age:'age',p_refW:'refW',p_height:'height',p_sex:'sex'};
+document.addEventListener('input',e=>{
+  const el=e.target,id=el.id||'';
+  if(id.startsWith('d_')){const k=id.slice(2);S.draft[k]=el.type==='number'?(el.value===''?'':+el.value):el.value}
+  else if(PKEY[id]){const p=P(),k=PKEY[id];p[k]=el.type==='number'?(el.value===''?null:+el.value):el.value;if(k==='hn')renderPtSel()}
+  else if(id.startsWith('s_')){const k=id.slice(2);S.settings[k]=el.tagName==='SELECT'?el.value:+el.value}
+  else if(el.dataset.sign){const set=new Set(S.draft.signs||[]);el.checked?set.add(el.dataset.sign):set.delete(el.dataset.sign);S.draft.signs=[...set]}
+  else if(el.dataset.risk){const p=P(),set=new Set(p.risks||[]);el.checked?set.add(el.dataset.risk):set.delete(el.dataset.risk);p.risks=[...set]}
+  else if(id==='m_postW'){const s=curSession();if(s){s.postW=el.value===''?null:+el.value;if(!s.sample)s.dirty=true}}
+  else if(id==='m_session'){S.monSel=el.value}
+  else return;
+  save();render();
+});
+document.addEventListener('change',e=>{if(e.target.matches('select')&&e.target.id!=='ptSel')e.target.dispatchEvent(new Event('input',{bubbles:true}))},true);
+
+/* ---------- step 1: assessment ---------- */
+function assessStd(d,p){
+  const c=calc(d),s=d.signs||[],st=S.settings;
+  let over=0;if(s.includes('edema'))over++;if(s.includes('crackles'))over+=2;if(s.includes('dyspnea'))over+=2;if(s.includes('jvd'))over++;
+  if(c.idwg!=null&&c.idwg>st.idwgWarn)over++;if(+d.sbp>st.sbpHigh)over++;
+  let low=0;if(s.includes('dizzy'))low++;if(s.includes('cramp'))low++;if(+d.sbp&&+d.sbp<st.sbpLow)low+=2;if(+d.preW&&p.dry&&+d.preW<p.dry)low++;
+  if(over>=3)return['น้ำเกินชัดเจน','crit','ทบทวนน้ำหนักแห้งร่วมกับแพทย์'];
+  if(over>=1&&low===0)return['มีภาวะน้ำเกิน','warn','ดึงน้ำตามแผน เฝ้าระวังอาการ'];
+  if(low>=2)return['เสี่ยงขาดน้ำ/ความดันต่ำ','crit','ทบทวนน้ำหนักเป้าหมาย อาจลด UF'];
+  if(low===1)return['เฝ้าระวังความดันต่ำ','warn','ประเมินซ้ำระหว่างฟอก'];
+  return['สมดุลใกล้เคียงปกติ','ok','ดึงน้ำตามน้ำหนักแห้ง'];
+}
+function assessCrit(d){
+  const c=calc(d),s=d.signs||[],st=S.settings,map=mapOf(d.sbp,d.dbp),ne=+d.ne||0,lac=+d.lactate||0;
+  let over=0;['crackles','edema','cxr','o2up'].forEach(k=>{if(s.includes(k))over++});
+  if(c.fo!=null&&c.fo>=st.foHigh)over+=2;if(has(d.bal24)&&+d.bal24>=st.io24Warn)over++;
+  const fluid=over>=3?['น้ำเกินมาก','crit','วางแผนดึงน้ำต่อเนื่องหลายรอบ']:over>=1?['มีภาวะน้ำเกิน','warn','ดึงน้ำตามเป้าหมายของแพทย์']:['ไม่พบน้ำเกินชัดเจน','ok','ทบทวนความจำเป็นของการดึงน้ำ'];
+  const perf=s.includes('mottle')||s.includes('crt');
+  const hemo=((map!=null&&map<st.mapLow)||ne>=st.neHigh||lac>=st.lacHigh||+d.vasoN>=2||s.includes('vaso2'))?['ไม่คงที่','crit','ปรึกษาแพทย์เรื่อง SLED/CRRT']
+    :(ne>0||lac>2||perf)?['คงที่ด้วยยา','warn','ดึงน้ำช้า ยืดเวลาฟอก']:['คงที่','ok','ดึงน้ำตามเป้าหมายได้'];
+  return {fluid,hemo,map};
+}
+function renderAssess(){
+  const d=S.draft,p=P(),nR=(p.risks||[]).length,[rl,rc]=riskLevel(nR);
+  const risk=`<div class="is-${rc}"><div class="k">ความเสี่ยง IDH</div><div class="v">${nR}<small>ปัจจัย</small></div><div class="s">ระดับ${rl}</div></div>`;
+  if(d.crit){const A=assessCrit(d);
+    $('assessOut').innerHTML=`
+     <div class="is-${A.fluid[1]}"><div class="k">สมดุลสารน้ำ</div><div class="t">${A.fluid[0]}</div><div class="s">${A.fluid[2]}</div></div>
+     <div class="is-${A.hemo[1]}"><div class="k">MAP · ระบบไหลเวียน</div><div class="v">${fmt(A.map,0)}<small>mmHg</small></div><div class="s">${A.hemo[0]} · ${A.hemo[2]}</div></div>
+     ${risk}`;return}
+  const c=calc(d),[fl,fc,fadv]=assessStd(d,p);
+  $('assessOut').innerHTML=`
+   <div class="is-${fc}"><div class="k">สมดุลสารน้ำ</div><div class="t">${fl}</div><div class="s">${fadv}</div></div>
+   <div class="${c.idwg>S.settings.idwgWarn?'is-warn':''}"><div class="k">IDWG</div><div class="v">${fmt(c.idwgKg)}<small>kg</small></div><div class="s">${fmt(c.idwg)}% ของน้ำหนักหลังฟอกครั้งก่อน</div></div>
+   ${risk}`;
+}
+
+/* ---------- step 2: UF plan ---------- */
+function renderCalc(){
+  const d=S.draft,c=calc(d),l=ufLevel(c),p=P(),st=S.settings;
+  const tag={ok:'<span class="pill p-ok">อยู่ในเกณฑ์</span>',warn:'<span class="pill p-warn">เฝ้าระวัง</span>',crit:'<span class="pill p-crit">เสี่ยงสูง</span>'}[l];
+  const third=c.ufr!=null?`<div class="is-${l}"><div class="k">UFR</div><div class="v">${fmt(c.ufr,2)}<small>mL/kg/hr</small></div><div class="s">${tag}</div></div>`
+    :`<div class="is-${l}"><div class="k">เทียบเกณฑ์ UF rate</div><div class="t">${tag}</div><div class="s">ไม่มีน้ำหนัก · เกณฑ์ ≤ ${st.ufRateWarn} mL/hr</div></div>`;
+  $('calcOut').innerHTML=`ตั้งเครื่อง UF <b>${n0(c.vol)} mL</b> · <b>${n0(c.rate)} mL/hr</b>${c.ufr!=null?` · UFR ${fmt(c.ufr,1)}`:''} ${tag}${d.crit?`<br><span class="note" style="margin:0">= ดึงสุทธิ ${n0(+d.netRemove||0)} + ชดเชยน้ำที่ได้รับ ${n0(c.inf+(+d.netFluid||0))} mL${(d.neConc&&d.neConc!=='none'?(+d.neRate||0):0)?` (รวม NE ${(d.neConc&&d.neConc!=='none'?(+d.neRate||0):0)} mL/hr)`:''}</span>`:''}`;
+  $('calcOut').hidden=d.crit?!has(d.netRemove):!(has(d.preW)&&has(d.targetW));
+  const risks=(p.risks||[]).length?p.risks.map(k=>RISKS.find(r=>r[0]===k)?.[1]).filter(Boolean).join(', '):'ไม่มี';
+  $('formula').textContent=d.crit?
+`UF ที่ตั้ง = ดึงสุทธิ ${fmt(+d.netRemove||0,0)} + สารน้ำต่อเนื่อง ${(+d.infRate||0)+(d.neConc&&d.neConc!=='none'?(+d.neRate||0):0)}×${d.hours||0} ชม. (${fmt(c.inf,0)}) + ${isHep(d)?'Heparin ไม่ flush':`flush ${flushN(d)}×${n0(FV())}`}${d.primeAV?` + priming A,V ${n0(PV())}`:''} (${+d.netFluid||0}) = ${fmt(c.vol,0)} mL
+UF rate   = ${fmt(c.vol,0)} ÷ ${d.hours||0} = ${fmt(c.rate,0)} mL/hr
+${c.ufr!=null?`UFR       = ${fmt(c.rate,0)} ÷ ${fmt(c.basisW)} kg (${SRC[d.refSrc]}) = ${fmt(c.ufr,2)} mL/kg/hr`:`UFR       = ไม่คำนวณ (ไม่มีน้ำหนัก) ใช้เกณฑ์ UF rate ${st.ufRateWarn}/${st.ufRateHigh} mL/hr`}
+${MOD[d.modality||'IHD']} · นอนเปล · MAP ${fmt(mapOf(d.sbp,d.dbp),0)} · NE ${has(d.ne)?d.ne:0} · ปัจจัยเสี่ยง ${risks}`:
+`UF ที่ตั้ง = (${fmt(d.preW)} − ${fmt(d.targetW)}) × 1000 + ${d.netFluid||0} = ${fmt(c.vol,0)} mL
+UF rate   = ${fmt(c.vol,0)} ÷ ${d.hours||0} = ${fmt(c.rate,0)} mL/hr
+UFR       = ${fmt(c.rate,0)} ÷ ${fmt(c.basisW)} kg = ${fmt(c.ufr,2)} mL/kg/hr
+กลุ่ม ${p.group} · ปัจจัยเสี่ยง ${risks}`;
+}
+
+/* ---------- recommendation: safe maximum ---------- */
+function recommend(d,p){
+  const st=S.settings,h=+d.hours||0,why=[],map=mapOf(d.sbp,d.dbp),ne=+d.ne||0,nR=(p.risks||[]).length;
+  const w=d.crit?(+d.refW||+d.estW||0):(+p.dry||+d.targetW||0);
+  const base=w>0?st.ufrWarn*w:st.ufRateWarn;
+  why.push(w>0?`เพดาน ${st.ufrWarn} mL/kg/hr × ${fmt(w)} kg = ${n0(base)} mL/hr`:`ไม่มีน้ำหนัก ใช้เพดาน UF rate ${n0(base)} mL/hr`);
+  let f=1,stop=false;const cut=(pct,txt)=>{why.push(`${txt} → ลดเพดานเหลือ ${pct}%`);f=Math.min(f,pct/100)};
+  if(d.crit){
+    if(map!=null&&map<st.mapLow){stop=true;why.push(`MAP ${fmt(map,0)} ต่ำกว่า ${st.mapLow} → ยังไม่แนะนำให้ดึงน้ำ`)}
+    else{
+      if(ne>=st.neHigh)cut(st.capSevere,`NE ≈${fmt(ne,2)} mcg/kg/min ≥ ${st.neHigh}`);else if(ne>=st.neWarn)cut(st.capMild,`NE ≈${fmt(ne,2)} mcg/kg/min ≥ ${st.neWarn}`);
+      if(+d.vasoN>=2||(d.signs||[]).includes('vaso2'))cut(st.capSevere,`ได้ยากระตุ้นความดันมากกว่า 1 ตัว`);
+      if(+d.lactate>=st.lacHigh)cut(st.capSevere,`Lactate ${d.lactate}`);else if(+d.lactate>2)cut(st.capMild,`Lactate ${d.lactate}`);
+      if(map!=null&&map<st.mapLow+10)cut(st.capMild,`MAP ${fmt(map,0)} ใกล้เกณฑ์`);
+    }
+  }else if(+d.sbp&&+d.sbp<st.sbpLow)cut(st.capSevere,`SBP ${d.sbp} ต่ำกว่า ${st.sbpLow}`);
+  if(!stop&&nR>=3){f*=st.capRisk/100;why.push(`ปัจจัยเสี่ยง IDH ${nR} ข้อ → คูณ ${st.capRisk}%`)}
+  if(stop)f=0;
+  const capRate=base*f,inf=d.crit?((+d.infRate||0)+(d.neConc&&d.neConc!=='none'?(+d.neRate||0):0)):0,rinse=+d.netFluid||0,comp=inf*h+rinse;
+  const maxNet=Math.max(0,capRate*h-comp);
+  if(comp>0)why.push(`หักสารน้ำที่ต้องชดเชย ${n0(comp)} mL (${inf?`drip ${inf}×${h} = ${n0(inf*h)} + `:''}${isHep(d)?'Heparin ไม่ flush':`flush ${flushN(d)} ครั้ง × ${n0(FV())}`}${d.primeAV?` + priming A,V ${n0(PV())}`:''} = ${n0(rinse)} ใน ${h} ชม.)`);
+  const target=d.crit?(has(d.netRemove)?+d.netRemove:null):(has(d.preW)&&has(d.targetW)?(+d.preW-+d.targetW)*1000:null);
+  const fv=isHep(d)?0:FV(),pr=primeOf(d),perHr=capRate-inf-fv,hNeed=target!=null&&perHr>0?Math.max(1,(target-fv+pr)/perHr):null;
+  const minW=!d.crit&&has(d.preW)?Math.ceil((+d.preW-maxNet/1000)*10)/10:null;
+  return {capRate,maxNet,why,stop,target,hNeed,minW,h};
+}
+function renderReco(){
+  const d=S.draft,p=P(),R=recommend(d,p),bad=R.stop||(R.target!=null&&R.target>R.maxNet+1);
+  const head=d.crit?`<div class="k">ดึงสุทธิได้ไม่เกิน</div><div class="big">${n0(R.maxNet)}<small>mL ใน ${fmt(R.h,R.h%1?1:0)} ชม.</small></div>`
+    :`<div class="k">น้ำหนักเป้าหมายต่ำสุดที่ปลอดภัย</div><div class="big">${R.minW!=null?fmt(R.minW):'–'}<small>kg</small></div><div class="s">ดึงได้ไม่เกิน ${n0(R.maxNet)} mL ใน ${fmt(R.h,R.h%1?1:0)} ชม.</div>`;
+  $('recoOut').className='reco'+(R.stop?' is-crit':'');
+  $('recoOut').innerHTML=head+`<details class="more" style="margin-top:8px;padding-top:8px"><summary>ทำไมได้ตัวเลขนี้</summary><div><div class="s">เพดาน UF rate ${n0(R.capRate)} mL/hr</div><ul>${R.why.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></details>
+    <div class="row" style="margin-top:10px"><button class="btn sm" id="useReco" type="button"${R.stop||!(R.maxNet>0)?' disabled':''}>ใช้ค่าที่แนะนำ</button></div>`;
+  let cmp='';
+  if(R.target!=null){
+    const t=d.crit?`${n0(R.target)} mL`:`${fmt(d.targetW)} kg (ดึง ${n0(R.target)} mL)`;
+    if(R.stop)cmp=`<div class="cmp crit"><b>ยังไม่ควรเริ่มดึงน้ำตามเป้า ${t}</b>ปรึกษาแพทย์เรื่องความดันก่อน</div>`;
+    else if(bad){const hh=R.hNeed!=null&&isFinite(R.hNeed)?Math.ceil(R.hNeed):null,alt=hh!=null&&hh<=6?`ขยายเวลาเป็น ${hh} ชม.`:'';
+      cmp=`<div class="cmp crit"><b>เป้าที่สั่ง ${t} เกินเพดาน ${n0(R.target-R.maxNet)} mL</b>ทางเลือกเสนอแพทย์: ${alt?alt+' หรือ ':''}ลดเป้าเหลือ ${d.crit?n0(R.maxNet)+' mL':fmt(R.minW)+' kg'}${d.crit?(hh!=null&&hh>6?' หรือเปลี่ยนเป็น SLED/CRRT (ถ้าขยายเวลาต้องใช้เกิน 6 ชม.)':' หรือเปลี่ยนเป็น SLED'):''}
+        ${alt?`<div class="row"><button class="btn sm" type="button" id="useHours">ใช้เวลา ${hh} ชม.</button></div>`:''}</div>`}
+    else cmp=`<div class="cmp ok"><b>เป้าที่สั่ง ${t} อยู่ในเพดานที่ปลอดภัย</b>เหลือระยะปลอดภัย ${n0(R.maxNet-R.target)} mL</div>`;
+  }
+  $('cmpOut').innerHTML=cmp;
+  return R;
+}
+document.addEventListener('click',e=>{
+  if(e.target.id==='useReco'){const R=recommend(S.draft,P());
+    if(S.draft.crit){S.draft.netRemove=Math.floor(R.maxNet/50)*50;$('d_netRemove').value=S.draft.netRemove}
+    else if(R.minW!=null){S.draft.targetW=R.minW;$('d_targetW').value=R.minW}
+    save();render();toast('ใส่ค่าที่แนะนำแล้ว ยืนยันกับแพทย์ก่อนตั้งเครื่อง')}
+  if(e.target.id==='goPre'){setTab('pre');return}
+  const go=e.target.id==='goAdd'?'m_sbp':(e.target.closest('.tap')||{}).dataset?.go;
+  if(go){$('addPanel').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>$(go).focus({preventScroll:true}),350);return}
+  if(e.target.id==='useHours'){const R=recommend(S.draft,P());S.draft.hours=Math.ceil(R.hNeed);S.hoursOther=![2,3,4].includes(S.draft.hours);$('d_hours').value=S.draft.hours;save();render()}
+});
+
+/* ---------- step 3: alerts ---------- */
+function buildAlerts(){
+  const d=S.draft,p=P(),c=calc(d),st=S.settings,out=[],nR=(p.risks||[]).length,ne=+d.ne||0,s=d.signs||[],R=recommend(d,p);
+  if(!R.stop&&R.target!=null&&R.target>R.maxNet+1)out.push(['crit',`เป้าที่สั่งเกินเพดานที่ปลอดภัย ${n0(R.target-R.maxNet)} mL`,'ดูทางเลือกในขั้นที่ 2 แล้วเสนอแพทย์ก่อนตั้งเครื่อง']);
+  if(c.ufr!=null){
+    if(c.ufr>st.ufrHigh)out.push(['crit',`UFR ${fmt(c.ufr,2)} เกิน ${st.ufrHigh} mL/kg/hr`,`ขยายเวลาฟอกเป็นอย่างน้อย ${fmt(c.vol/(st.ufrHigh*c.basisW))} ชม. หรือลดเป้าหมาย แจ้งแพทย์`]);
+    else if(c.ufr>st.ufrWarn)out.push(['warn',`UFR ${fmt(c.ufr,2)} อยู่ในช่วงเฝ้าระวัง`,`ใช้เวลา ${fmt(c.hNeed)} ชม. จะได้ UFR ≤ ${st.ufrWarn} วัดความดันถี่ขึ้น`]);
+  }else if(d.crit){
+    if(c.rate>st.ufRateHigh)out.push(['crit',`UF rate ${fmt(c.rate,0)} mL/hr เกิน ${st.ufRateHigh}`,`ขยายเวลาเป็นอย่างน้อย ${fmt(c.vol/st.ufRateHigh)} ชม. เปลี่ยนเป็น SLED หรือลดเป้าหมาย แจ้งแพทย์`]);
+    else if(c.rate>st.ufRateWarn)out.push(['warn',`UF rate ${fmt(c.rate,0)} mL/hr อยู่ในช่วงเฝ้าระวัง`,`ใช้เวลา ${fmt(c.hNeed)} ชม. จะได้ ≤ ${st.ufRateWarn} mL/hr`]);
+  }
+  if(nR>=3&&ufLevel(c)!=='ok')out.push(['crit','ปัจจัยเสี่ยง IDH สูงร่วมกับอัตราดึงน้ำสูง','เตรียม NSS, BP ทุก 15–30 นาที, พิจารณา UF profiling หรือลดอุณหภูมิ dialysate']);
+  else if(nR>=3)out.push(['warn',`ปัจจัยเสี่ยง IDH ${nR} ข้อ`,'เฝ้าระวังความดันต่ำระหว่างฟอก']);
+  if(d.crit){
+    const map=mapOf(d.sbp,d.dbp);
+    if(!has(d.netRemove))out.push(['warn','ยังไม่ระบุเป้าหมายดึงน้ำสุทธิ','ยืนยันปริมาณต่อรอบกับแพทย์ก่อนตั้งเครื่อง']);
+    if(map!=null&&map<st.mapLow)out.push(['crit',`MAP ${fmt(map,0)} mmHg ต่ำกว่า ${st.mapLow}`,'ยังไม่ควรเริ่มดึงน้ำ ปรึกษาแพทย์เรื่องปรับยาหรือเปลี่ยนเป็น SLED/CRRT']);
+    if(ne>=st.neHigh)out.push(['crit',`Norepinephrine ≈${fmt(ne,2)} mcg/kg/min`,'เสี่ยง IDH สูงมาก พิจารณา SLED/CRRT, UF ต่ำ, dialysate เย็น ตามแผนแพทย์']);
+    else if(ne>=st.neWarn)out.push(['warn',`Norepinephrine ≈${fmt(ne,2)} mcg/kg/min`,'ยืดเวลาฟอก ลด UF rate บันทึก MAP ทุก 15 นาที']);
+    else if(ne>0)out.push(['info','ได้ยากระตุ้นความดันขนาดต่ำ','บันทึก MAP ทุก 15–30 นาที']);
+    if(+d.vasoN>=2||s.includes('vaso2'))out.push(['crit',`ได้ยากระตุ้นความดันมากกว่า 1 ตัว`,'ระบบไหลเวียนไม่คงที่ ปรึกษาแพทย์เรื่องวิธีบำบัดทดแทนไต']);
+    if(+d.lactate>=st.lacHigh)out.push(['crit',`Lactate ${d.lactate} mmol/L`,'ไม่ควรดึงน้ำมาก ปรึกษาแพทย์']);
+    else if(+d.lactate>2)out.push(['warn',`Lactate ${d.lactate} mmol/L`,'ติดตามซ้ำ ประเมิน perfusion ระหว่างฟอก']);
+    if(s.includes('mottle')||s.includes('crt'))out.push(['warn','Perfusion ไม่ดี','ประเมินซ้ำก่อนเพิ่ม UF']);
+    if(c.fo!=null&&c.fo>=st.foHigh)out.push(['crit',`Fluid overload ${fmt(c.fo)}%`,'วางแผนดึงน้ำต่อเนื่องหลายรอบหรือ CRRT']);
+    if(has(d.bal24)&&+d.bal24>=st.io24Warn)out.push(['warn',`I/O 24 ชม. เกิน ${n0(d.bal24)} mL`,'ติดตาม I/O ทุกวัน วางแผนดึงน้ำต่อเนื่อง']);
+    if(has(d.spo2)&&+d.spo2<st.spo2Low)out.push(['crit',`SpO₂ ${d.spo2}%`,'แจ้งแพทย์ ประเมินน้ำท่วมปอดและค่า ventilator ก่อนเริ่มฟอก']);
+    if(+d.fio2>=st.fio2Warn||+d.peep>=st.peepWarn)out.push(['warn',`FiO₂ ${d.fio2||'–'}% / PEEP ${d.peep||'–'}`,'ติดตาม SpO₂ และค่า ventilator ระหว่างฟอก']);
+    if(has(d.netRemove)&&c.inf>+d.netRemove)out.push(['warn','สารน้ำระหว่างฟอกมากกว่าเป้าดึงน้ำ','ประสานแพทย์/เภสัชกรเรื่องผสมยาเข้มข้น หรือพักอาหารทางสายช่วงฟอก']);
+    else if(!(+d.infRate>0))out.push(['info','ยังไม่ได้ใส่ยา drip อื่น / อาหารทางสาย','ถ้าผู้ป่วยได้รับอยู่ ให้ใส่ mL/hr ด้วย ไม่เช่นนั้นจะดึงน้ำสุทธิได้น้อยกว่าเป้า']);
+  }else{
+    if(c.idwg!=null&&c.idwg>st.idwgWarn)out.push(['warn',`IDWG ${fmt(c.idwg)}% เกิน ${st.idwgWarn}%`,'ให้ความรู้เรื่องจำกัดน้ำและเกลือ']);
+    if(+d.sbp&&+d.sbp<st.sbpLow)out.push(['crit',`SBP ${d.sbp} mmHg ต่ำกว่าเกณฑ์`,'ทบทวนแผนดึงน้ำและยาลดความดันก่อนเริ่มฟอก']);
+    if(+d.sbp&&+d.sbp>st.sbpHigh)out.push(['warn',`SBP ${d.sbp} mmHg สูงกว่าเกณฑ์`,'ประเมินภาวะน้ำเกิน รายงานแพทย์']);
+    if(+d.targetW&&p.dry&&+d.targetW<p.dry)out.push(['warn','น้ำหนักเป้าหมายต่ำกว่าน้ำหนักแห้ง',`น้ำหนักแห้ง ${p.dry} kg ยืนยันกับแพทย์`]);
+    if(s.includes('crackles')||s.includes('dyspnea'))out.push(['crit','มีอาการน้ำเกินที่ปอด','ประเมิน SpO₂ รายงานแพทย์']);
+    if(c.vol<=0&&+d.preW)out.push(['info','ไม่มีน้ำที่ต้องดึง','ตรวจสอบน้ำหนักก่อนฟอกและน้ำหนักเป้าหมาย']);
+  }
+  if(!out.some(a=>a[0]==='crit'||a[0]==='warn'))out.unshift(['ok','ไม่พบค่าผิดปกติตามเกณฑ์','ดำเนินการตามแผน และบันทึกระหว่างฟอกตามปกติ']);
+  const rank={crit:0,warn:1,info:2,ok:3};return out.sort((a,b)=>rank[a[0]]-rank[b[0]]);
+}
+function renderAlert(){
+  const list=buildAlerts(),main=list.filter(a=>a[0]!=='info'),info=list.filter(a=>a[0]==='info');
+  const card=([c,t,p])=>`<div class="alert ${c}"><i></i><div><b>${esc(t)}</b><p>${esc(p)}</p></div></div>`;
+  $('alertList').innerHTML=(main.length?main:[['ok','ไม่พบค่าผิดปกติตามเกณฑ์','ดำเนินการตามแผน']]).map(card).join('');
+  $('infoMore').hidden=!info.length;$('infoSum').textContent=`ข้อแนะนำเพิ่มเติม ${info.length} ข้อ`;$('infoList').innerHTML=info.map(card).join('');
+  const n=list.filter(a=>a[0]==='crit').length,dot=$('alertDot');dot.hidden=!n;dot.textContent=n;
+}
+$('saveSession').addEventListener('click',()=>{
+  const d=S.draft;
+  if(d.crit){if(!(has(d.netRemove)&&+d.hours>0)){toast('ใส่เป้าหมายดึงน้ำสุทธิและเวลาฟอกก่อนบันทึก');return}}
+  else if(!(+d.preW>0&&+d.targetW>0&&+d.hours>0)){toast('ใส่น้ำหนักก่อนฟอก น้ำหนักเป้าหมาย และเวลาฟอกก่อนบันทึก');return}
+  const s={...JSON.parse(JSON.stringify(d)),id:uid(),pid:S.cur,mon:[],postW:null};
+  S.sessions.push(s);S.monSel=s.id;save();touch(s);toast('บันทึกแผนแล้ว');setTab('mon');
+});
+$('copyResult').addEventListener('click',()=>{const t=fdarText(S.draft);$('fdarPre').value=t;copy(t,'คัดลอกบันทึก FIE แล้ว',$('fdarPre'))});
+$('copyFdar').addEventListener('click',()=>{const s=curSession();if(!s)return;copy(fdarText(s),'คัดลอกบันทึก FIE แล้ว',$('fdarMon'))});
+
+/* ---------- during HD ---------- */
+function ptSessions(){return S.sessions.filter(s=>s.pid===S.cur).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0)}
+function curSession(){const l=ptSessions();return l.find(s=>s.id===S.monSel)||l[0]}
+function renderMon(){
+  const l=ptSessions(),s=curSession(),st=S.settings;
+  $('m_session').innerHTML=l.length?l.map(x=>`<option value="${x.id}"${s&&x.id===s.id?' selected':''}>${x.date} · ${x.crit?MOD[x.modality||'IHD']:'HD'} · UF ${fmt(calc(x).vol,0)} mL</option>`).join(''):'<option>ยังไม่มีรอบการฟอก</option>';
+  {const td=today(),hasToday=l.some(x=>x.date===td);
+   $('monBanner').innerHTML=!hasToday?`<div class="cmp crit" style="margin-top:12px"><b>ยังไม่มีรอบการฟอกของวันนี้</b>เริ่มที่หน้าก่อนฟอก กรอกข้อมูลแล้วกด "บันทึก แล้วไปบันทึกระหว่างฟอก" แอปจะพากลับมาที่หน้านี้พร้อมรอบใหม่<div class="row"><button class="btn sm primary" type="button" id="goPre">ไปหน้าก่อนฟอก</button></div></div>`
+     :(s&&s.date!==td?'<p class="note">กำลังดูรอบเก่า เลือกรอบของวันนี้จากช่อง "รอบการฟอก" ด้านบน</p>':'')}
+  if(!s){$('monSummary').innerHTML='<p class="note">บันทึกแผนจากหน้า "ก่อนฟอก" ก่อน แล้วกลับมาที่หน้านี้</p>';$('monTable').innerHTML='';return}
+  if(document.activeElement!==$('m_postW'))$('m_postW').value=s.postW??'';
+  const c=calc(s),idh=isIDH(s),u=maxUf(s),cr=!!s.crit;
+  const next=nextT(s);if(S.mtSel==null&&!S.mtOther)S.mtSel=next;
+  if(S.mtSel!=null&&![30,60,120,180].includes(S.mtSel)&&!S.mtOther){S.mtOther=true;$('m_t').value=fmtT(S.mtSel)}
+  document.querySelectorAll('#mtQ button').forEach(b=>b.classList.toggle('on',b.dataset.m==='other'?!!S.mtOther:(!S.mtOther&&+b.dataset.m===S.mtSel)));$('m_t').hidden=!S.mtOther;
+  let last;
+  if(cr){const maps=(s.mon||[]).map(m=>mapOf(m.sbp,m.dbp)).filter(v=>v!=null),mn=maps.length?Math.min(...maps):null;
+    last=`<div class="${mn!=null&&mn<st.mapLow?'is-crit':''}"><div class="k">MAP ต่ำสุด</div><div class="v">${fmt(mn,0)}</div><div class="s">ก่อนฟอก ${fmt(mapOf(s.sbp,s.dbp),0)}</div></div>`}
+  else{const diff=has(s.postW)?s.postW-s.targetW:null;
+    last=`<div class="${diff!=null&&Math.abs(diff)>0.5?'is-warn':''}"><div class="k">ห่างน้ำหนักเป้าหมาย</div><div class="v">${diff==null?'–':(diff>0?'+':'')+fmt(diff)}<small>kg</small></div></div>`}
+  $('monSummary').innerHTML=`<div class="readout">
+    <div><div class="k">UF ทำได้ / ตั้งไว้</div><div class="v">${fmt(u,0)}<small>/ ${fmt(c.vol,0)}</small></div><div class="s">${c.vol>0?fmt(u/c.vol*100,0):'–'}%</div></div>
+    <div class="is-${ufLevel(c)}"><div class="k">${c.ufr!=null?'UFR ตามแผน':'UF rate ตามแผน'}</div><div class="v">${c.ufr!=null?fmt(c.ufr,2):fmt(c.rate,0)}</div></div>
+    <div class="${idh?'is-crit':'is-ok'}"><div class="k">IDH</div><div class="t">${idh?'เกิด IDH':'ไม่เกิด'}</div></div>${last}</div>
+    <button class="btn primary block" type="button" id="goAdd" style="margin-top:12px">+ บันทึก BP / UF ตอนนี้</button>`;
+  $('monSummary').querySelectorAll('.readout>div').forEach((t,i)=>{t.classList.add('tap');t.dataset.go=i===0?'m_uf':'m_sbp'});
+  const rows=(s.mon||[]).map((m,i)=>[m,i]).sort((a,b)=>a[0].t-b[0].t).map(([m,i])=>{
+    const bad=rowIDH(s,m),mm=mapOf(m.sbp,m.dbp);
+    return `<tr><td class="n">${fmtT(m.t)}</td><td class="n">${m.sbp}/${m.dbp??''}</td><td class="n">${fmt(mm,0)}</td><td class="n">${m.hr??''}</td>
+      ${cr?`<td class="n">${has(m.neRate)?m.neRate:has(m.ne)?m.ne:''}</td><td class="n">${has(m.spo2)?m.spo2:''}</td>`:''}<td class="n">${m.uf??''}</td>
+      <td>${bad?'<span class="pill p-crit">IDH</span> ':''}${(m.sym||[]).map(k=>esc(SYMS.find(x=>x[0]===k)?.[1])).join(', ')} ${esc(m.note)}</td>
+      <td><button class="btn sm ghost" data-del="${i}" aria-label="ลบบันทึก">ลบ</button></td></tr>`}).join('');
+  const rule=cr?`MAP &lt; ${st.mapLow}, SBP ลดลง ≥ ${st.sbpDrop}, ต้องเพิ่มยากระตุ้นความดัน หรือมีอาการ`:`SBP &lt; ${st.sbpIdh} หรือลดลง ≥ ${st.sbpDrop} หรือมีอาการ`;
+  $('monTable').innerHTML=s.mon&&s.mon.length?`<div class="tbl"><table><thead><tr><th>เวลา</th><th>BP</th><th>MAP</th><th>HR</th>${cr?'<th>NE mL/hr</th><th>SpO₂</th>':''}<th>UF</th><th>อาการ/การพยาบาล</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="note">ก่อนฟอก BP ${s.sbp||'–'}/${s.dbp||'–'}${cr?' · NE '+(CONC[s.neConc]?s.neConc.replace('/',':')+' '+(s.neRate||0)+' mL/hr':(has(s.ne)?s.ne:'0')):''} · IDH = ${rule}</p>`:'<p class="note" style="margin:0">ยังไม่มีบันทึก</p>';
+}
+$('addMon').addEventListener('click',()=>{
+  const s=curSession();if(!s){toast('ยังไม่มีรอบการฟอก');return}
+  const v=id=>$(id).value,n=id=>v(id)===''?null:+v(id);if(!v('m_sbp')){toast('ใส่ SBP ก่อน');return}
+  const sym=[...document.querySelectorAll('[data-sym]:checked')].map(x=>x.dataset.sym);
+  s.mon=s.mon||[];const t=S.mtOther?parseT(v('m_t')):(S.mtSel??nextT(s));if(t==null){toast('ใส่เวลาเป็น ชม.:นาที เช่น 1:30');return}
+  s.mon.push({t,sbp:+v('m_sbp'),dbp:n('m_dbp'),hr:n('m_hr'),neRate:n('m_ne'),spo2:n('m_spo2'),uf:n('m_uf'),sym,note:v('m_note')});
+  S.mtSel=null;S.mtOther=false;['m_t','m_sbp','m_dbp','m_hr','m_spo2','m_uf','m_note'].forEach(id=>$(id).value='');document.querySelectorAll('[data-sym]').forEach(x=>x.checked=false);
+  save();touch(s);render();toast(rowIDH(s,s.mon[s.mon.length-1])?'บันทึกแล้ว · เข้าเกณฑ์ IDH':'บันทึกแล้ว');
+});
+function nextT(s){const last=(s.mon||[]).reduce((m,x)=>Math.max(m,+x.t||0),0);return last<30?30:last<60?60:Math.ceil((last+1)/60)*60}
+const fmtT=m=>has(m)?`${Math.floor(m/60)}:${String(Math.round(m%60)).padStart(2,'0')}`:'–';
+function parseT(v){v=String(v||'').trim().replace('.',':');if(!v)return null;
+  if(v.includes(':')){const [a,b]=v.split(':');const H=+a||0,M=+b||0;return isFinite(H)&&isFinite(M)&&M<60?H*60+M:null}
+  const x=+v;return isFinite(x)&&x>0?Math.round(x*60):null}
+$('mtQ').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;
+  if(b.dataset.m==='other'){S.mtOther=true;render();$('m_t').focus()}else{S.mtOther=false;S.mtSel=+b.dataset.m;render()}});
+$('monTable').addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(!b)return;const s=curSession();s.mon.splice(+b.dataset.del,1);save();touch(s);render()});
+
+/* ---------- charts ---------- */
+function lineChart(vals,{lines=[],marks=[]}={}){
+  const W=640,H=220,L=44,R=12,T=12,B=28;
+  if(!vals.length)return '<p class="note">ยังไม่มีข้อมูล</p>';
+  const all=vals.concat(lines.map(l=>l.v)).filter(v=>isFinite(v));
+  let max=Math.ceil(Math.max(...all)*1.15),min=Math.max(0,Math.floor(Math.min(...all)*0.8));if(max===min)max=min+1;
+  const x=i=>L+(vals.length===1?(W-L-R)/2:i*(W-L-R)/(vals.length-1)),y=v=>T+(H-T-B)*(1-(v-min)/(max-min));
+  const step=(max-min)/4;let g='';
+  for(let k=0;k<=4;k++){const v=min+step*k;g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${fmt(v,step<1?1:0)}</text>`}
+  lines.forEach(l=>{if(l.v<=max&&l.v>=min)g+=`<line x1="${L}" x2="${W-R}" y1="${y(l.v)}" y2="${y(l.v)}" stroke="${l.c}" stroke-dasharray="5 4" stroke-width="1.5"/>`});
+  const pts=vals.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  g+=`<polygon points="${x(0)},${H-B} ${pts} ${x(vals.length-1)},${H-B}" fill="var(--accent-soft)" opacity=".7"/><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round"/>`;
+  vals.forEach((v,i)=>{const m=marks[i];g+=`<circle cx="${x(i)}" cy="${y(v)}" r="${m?5:3}" fill="${m?'var(--crit)':'var(--surface)'}" stroke="${m?'var(--crit)':'var(--accent)'}" stroke-width="2"/>`});
+  const every=Math.ceil(vals.length/8);vals.forEach((v,i)=>{if(i%every===0||i===vals.length-1)g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle">${i+1}</text>`});
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`;
+}
+function renderTrend(){
+  const l=ptSessions().slice().reverse(),p=P(),st=S.settings,cs=l.map(calc),useUfr=cs.length&&cs.every(c=>c.ufr!=null);
+  $('trendLead').textContent=`${p.hn} · ${p.group}${p.crit?' · นอนเปล':''} · ${l.length} รอบ (แกนนอน = ครั้งที่)`;
+  if(useUfr){$('ch1Title').textContent='UFR รายครั้ง (mL/kg/hr)';$('ch1').innerHTML=lineChart(cs.map(c=>c.ufr),{lines:[{v:st.ufrWarn,c:'var(--warn)'},{v:st.ufrHigh,c:'var(--crit)'}],marks:l.map(isIDH)})}
+  else{$('ch1Title').textContent='UF rate รายครั้ง (mL/hr)';$('ch1').innerHTML=lineChart(cs.map(c=>c.rate),{lines:[{v:st.ufRateWarn,c:'var(--warn)'},{v:st.ufRateHigh,c:'var(--crit)'}],marks:l.map(isIDH)})}
+  if(p.crit){$('ch2Title').textContent='I/O 24 ชม. ก่อนฟอก (mL)';$('ch2').innerHTML=lineChart(l.map(s=>has(s.bal24)?+s.bal24:0),{lines:[{v:st.io24Warn,c:'var(--warn)'}]})}
+  else{$('ch2Title').textContent='IDWG รายครั้ง (%)';$('ch2').innerHTML=lineChart(cs.map(c=>c.idwg??0),{lines:[{v:st.idwgWarn,c:'var(--warn)'}]})}
+  $('trendTable').innerHTML=l.length?`<div class="tbl"><table><thead><tr><th>#</th><th>วันที่</th><th>ช่วง</th><th>วิธี</th><th>ชม.</th><th>UF</th><th>mL/hr</th><th>UFR</th><th>${p.crit?'I/O 24h':'IDWG %'}</th><th>บรรลุเป้า</th><th>IDH</th></tr></thead><tbody>${
+    l.map((s,i)=>{const c=cs[i],a=achieved(s),lv=ufLevel(c);return `<tr><td class="n">${i+1}</td><td>${s.date}</td><td>${s.phase==='pre'?'ก่อน':'หลัง'}</td><td>${s.crit?MOD[s.modality||'IHD']:'HD'}</td><td class="n">${s.hours}</td><td class="n">${fmt(c.vol,0)}</td>
+      <td class="n">${c.ufr==null?`<span class="pill p-${lv}">${fmt(c.rate,0)}</span>`:fmt(c.rate,0)}</td><td class="n">${c.ufr!=null?`<span class="pill p-${lv}">${fmt(c.ufr,2)}</span>`:'–'}</td>
+      <td class="n">${s.crit?n0(s.bal24):fmt(c.idwg)}</td><td>${a==null?'–':a?'<span class="pill p-ok">ใช่</span>':'<span class="pill p-warn">ไม่</span>'}</td><td>${isIDH(s)?'<span class="pill p-crit">เกิด</span>':''}</td></tr>`}).reverse().join('')
+  }</tbody></table></div>`:'<p class="note">ยังไม่มีข้อมูล</p>';
+}
+
+/* ---------- dashboard ---------- */
+function stats(list){
+  const n=list.length,cs=list.map(calc),mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const ufr=cs.map(c=>c.ufr).filter(v=>v!=null),ach=list.map(achieved).filter(v=>v!=null);
+  return {n,pts:new Set(list.map(s=>s.pid)).size,rate:mean(cs.map(c=>c.rate)),ufr:mean(ufr),
+    hi:n?cs.filter(c=>ufLevel(c)==='crit').length/n*100:null,idh:n?list.filter(isIDH).length/n*100:null,
+    stop:n?list.filter(s=>(s.mon||[]).some(m=>(m.sym||[]).includes('ufStop'))).length/n*100:null,
+    tw:ach.length?ach.filter(Boolean).length/ach.length*100:null,idwg:mean(cs.map(c=>c.idwg).filter(v=>v!=null)),
+    cum:mean(list.filter(s=>s.crit&&has(s.bal24)).map(s=>+s.bal24)),hrs:mean(list.map(s=>+s.hours))};
+}
+$('phaseSel').addEventListener('click',e=>{const b=e.target.closest('[data-ph]');if(!b)return;S.draft.phase=b.dataset.ph;save();render();toast('รอบใหม่จะบันทึกเป็นช่วง'+(b.dataset.ph==='pre'?'ก่อนพัฒนา':'หลังพัฒนา'))});
+$('dashGrp').addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b)return;S.dashGrp=b.dataset.g;save();render()});
+function renderDash(){
+  const g=S.dashGrp||'all';document.querySelectorAll('#dashGrp button').forEach(b=>b.classList.toggle('on',b.dataset.g===g));
+  const pool=S.sessions.filter(s=>g==='all'||(g==='crit')===!!s.crit),a=stats(pool.filter(s=>s.phase==='pre')),b=stats(pool.filter(s=>s.phase==='post'));
+  const row=(lab,k,d=1,suf='',better='low')=>{const x=a[k],y=b[k];if(x==null&&y==null)return'';let ch='';
+    if(better&&x!=null&&y!=null){const dv=y-x,good=better==='low'?dv<0:dv>0;ch=Math.abs(dv)<1e-9?'<span class="pill p-info">เท่าเดิม</span>':`<span class="pill ${good?'p-ok':'p-crit'}">${dv>0?'+':''}${fmt(dv,d)}${suf}</span>`}
+    return `<tr><td>${lab}</td><td class="n">${fmt(x,d)}${x!=null?suf:''}</td><td class="n">${fmt(y,d)}${y!=null?suf:''}</td><td>${ch}</td></tr>`};
+  $('dashTable').innerHTML=`<div class="tbl"><table><thead><tr><th>ตัวชี้วัด</th><th style="text-align:right">ก่อน</th><th style="text-align:right">หลัง</th><th>เปลี่ยนแปลง</th></tr></thead><tbody>
+    ${row('จำนวนรอบการฟอก','n',0,'',null)}${row('จำนวนผู้ป่วย','pts',0,'',null)}
+    ${row('UF rate เฉลี่ย (mL/hr)','rate',0)}${row('UFR เฉลี่ย (mL/kg/hr) · มีน้ำหนัก','ufr',2)}
+    ${row('รอบที่อัตราดึงน้ำเกินเกณฑ์สูง','hi',1,'%')}${row('IDH ต่อ 100 รอบ','idh',1)}${row('รอบที่ต้องลด/หยุด UF','stop',1,'%')}
+    ${row('บรรลุเป้าหมายการดึงน้ำ','tw',1,'%','high')}${row('IDWG เฉลี่ย (%)','idwg',2)}${row('I/O 24 ชม. เฉลี่ย (mL) · นอนเปล','cum',0)}${row('เวลาฟอกเฉลี่ย (ชม.)','hrs',2,'','high')}
+    </tbody></table></div><p class="note">บรรลุเป้า: ผู้ป่วยชั่งได้ = น้ำหนักหลังฟอกห่างเป้า ≤ 0.5 kg · นอนเปล = UF ที่ดึงได้ ≥ 90% ของที่ตั้ง · อัตราดึงน้ำเกินเกณฑ์ใช้ UFR เมื่อมีน้ำหนัก และ UF rate เมื่อไม่มี · การทดสอบทางสถิติให้ทำจากข้อมูลที่ส่งออก</p>`;
+  const items=[['UF rate',a.rate,b.rate],['% เกินเกณฑ์',a.hi,b.hi],['IDH /100',a.idh,b.idh],['% บรรลุเป้า',a.tw,b.tw]];
+  const W=640,H=240,L=12,B=40,T=18,gw=(W-L*2)/items.length,bw=Math.min(46,gw/3);
+  let sv=`<line x1="${L}" x2="${W-L}" y1="${H-B}" y2="${H-B}" stroke="var(--line)"/>`;
+  items.forEach(([lab,x,y],i)=>{const mx=Math.max(x||0,y||0,1)*1.18,cx=L+gw*i+gw/2;
+    [[x,'var(--muted)',-bw-3],[y,'var(--accent)',3]].forEach(([v,c,off])=>{const h=(H-B-T)*((v||0)/mx);
+      sv+=`<rect x="${cx+off}" y="${H-B-h}" width="${bw}" height="${h}" rx="3" fill="${c}"/><text x="${cx+off+bw/2}" y="${H-B-h-5}" text-anchor="middle">${fmt(v,v>100?0:1)}</text>`});
+    sv+=`<text x="${cx}" y="${H-B+18}" text-anchor="middle">${lab}</text>`});
+  $('chDash').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img">${sv}</svg><p class="note">แต่ละกลุ่มแท่งใช้สเกลของตัวเอง</p>`;
+}
+const GS_COLS=['record_id','patient','group','bedridden','anticoag','prime_av','date','phase','modality','pre_wt','last_post_wt','target_wt','post_wt','ref_wt','ref_source','io24_ml','flush_prime_ml','net_remove_ml','infusion_mlhr','ne_rate_mlhr','ne_conc','ne_mcgkgmin','hours','uf_set_ml','uf_rate_mlhr','ufr','idwg_pct','sbp_pre','dbp_pre','map_pre','fio2','peep','spo2','lactate','risk_count','rec_max_net_ml','over_cap','map_min_intra','uf_achieved_ml','target_met','uf_stopped','idh','records'];
+function rowOf(s){
+  const p=S.patients.find(x=>x.id===s.pid)||{},c=calc(s),a=achieved(s),cr=!!s.crit,mp=mapOf(s.sbp,s.dbp),R=recommend(s,p);
+  const q=v=>has(v)?+v:'',r1=v=>has(v)?Math.round(v*10)/10:'',r2=v=>has(v)?Math.round(v*100)/100:'';
+  const maps=(s.mon||[]).map(m=>mapOf(m.sbp,m.dbp)).filter(v=>v!=null);
+  const neOn=!!CONC[s.neConc];
+  return [s.id,p.hn||'',p.group||'',cr?1:0,isHep(s)?'heparin':'non-heparin',s.primeAV?1:0,s.date||'',s.phase||'',cr?s.modality||'IHD':'HD',
+    cr?'':q(s.preW),cr?'':q(s.lastPostW),cr?'':q(s.targetW),q(s.postW),cr?r1(c.basisW):'',cr?s.refSrc||'none':'',
+    cr?q(s.bal24):'',+s.netFluid||0,cr?q(s.netRemove):'',cr?q(s.infRate):'',cr&&neOn?q(s.neRate):'',cr&&neOn?s.neConc.replace('/',':'):'',cr?r2(s.ne):'',
+    +s.hours||'',Math.round(c.vol),Math.round(c.rate),c.ufr!=null?r2(c.ufr):'',c.idwg!=null?r2(c.idwg):'',
+    q(s.sbp),q(s.dbp),mp?Math.round(mp):'',cr?q(s.fio2):'',cr?q(s.peep):'',cr?q(s.spo2):'',cr?q(s.lactate):'',(p.risks||[]).length,
+    Math.round(R.maxNet),R.target!=null&&(R.stop||R.target>R.maxNet+1)?1:0,maps.length?Math.round(Math.min(...maps)):'',maxUf(s)||'',a==null?'':a?1:0,
+    (s.mon||[]).some(m=>(m.sym||[]).includes('ufStop'))?1:0,isIDH(s)?1:0,(s.mon||[]).length];
+}
+function csv(){
+  const esc2=v=>{v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  return [GS_COLS.join(',')].concat(S.sessions.slice().sort((a,b)=>a.date<b.date?-1:1).map(s=>rowOf(s).map(esc2).join(','))).join('\n');
+}
+/* ---------- Google Sheet sync ---------- */
+const gsPending=()=>S.sessions.filter(s=>!s.sample&&(!s.sentAt||s.dirty));
+function gsSend(list,quiet){
+  const url=(S.gsUrl||'').trim();
+  list=(list||[]).filter(s=>s&&!s.sample);
+  if(!url){if(!quiet)toast('ยังไม่ได้ใส่ลิงก์ Google Sheet ในหน้ารายงาน');return}
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(url)){if(!quiet)toast('ลิงก์ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://script.google.com/macros/s/ และลงท้ายด้วย /exec');return}
+  if(!list.length){if(!quiet)toast('ไม่มีรอบที่ต้องส่ง');return}
+  let p;try{p=fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({rows:list.map(rowOf)})})}catch(e){p=Promise.reject(e)}
+  p.then(()=>{const t=Date.now();list.forEach(s=>{s.sentAt=t;s.dirty=false});S.gsErr='';save();render();if(!quiet)toast(`ส่งเข้า Google Sheet แล้ว ${list.length} รอบ`)},
+    ()=>{S.gsErr='ส่งไม่ได้ ตรวจสอบอินเทอร์เน็ต หรือถ้าเปิดแอปผ่าน claude.ai ให้ใช้ไฟล์ PFM-HD.html แทน';save();render();if(!quiet)toast(S.gsErr)});
+}
+function touch(s){if(s&&!s.sample){s.dirty=true;gsSend([s],true)}}
+$('gsUrl').addEventListener('change',e=>{S.gsUrl=e.target.value.trim();save();render();if(S.gsUrl)gsSend(gsPending(),false)});
+$('gsSendAll').addEventListener('click',()=>gsSend(gsPending(),false));
+$('gsSendOne').addEventListener('click',()=>{const s=curSession();if(s&&s.sample){toast('รอบตัวอย่างไม่ถูกส่งเข้า Sheet');return}if(s){s.dirty=true;gsSend([s],false)}});
+function renderGs(){
+  if(document.activeElement!==$('gsUrl'))$('gsUrl').value=S.gsUrl||'';
+  const real=S.sessions.filter(s=>!s.sample),pend=gsPending().length;
+  $('gsStatus').innerHTML=!S.gsUrl?'ยังไม่ได้เชื่อมต่อ':(S.gsErr?`<span style="color:var(--crit)">${esc(S.gsErr)}</span>`:`เชื่อมต่อแล้ว · ส่งแล้ว ${real.length-pend} / ${real.length} รอบ`+(pend?` · รอส่ง ${pend}`:''));
+  const s=curSession();$('gsOne').textContent=!s?'':s.sample?'รอบตัวอย่าง ไม่ส่งเข้า Sheet':(s.sentAt&&!s.dirty?'ส่งเข้า Sheet แล้ว '+new Date(s.sentAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'ยังไม่ได้ส่งรอบนี้');
+}
+$('copyCsv').addEventListener('click',()=>{const t=csv();$('csvBox').value=t;$('csvBox').hidden=false;copy(t,`คัดลอก ${S.sessions.length} แถวแล้ว`,$('csvBox'))});
+$('askClear').addEventListener('click',()=>$('clearConfirm').hidden=false);
+$('cancelClear').addEventListener('click',()=>$('clearConfirm').hidden=true);
+$('doClear').addEventListener('click',()=>{
+  S={patients:[{id:'p1',hn:'ผู้ป่วยใหม่',group:'AKI',crit:true,refSrc:'none',age:null,risks:[]}],sessions:[],settings:{...S.settings},cur:'p1',tab:'pre',dashGrp:'all',migr3:true,draft:blankDraft('p1'),sample:false};
+  save();$('clearConfirm').hidden=true;syncDraft();updateMode();fillForms();renderPtSel();setTab('pre');toast('ลบข้อมูลแล้ว');
+});
+$('addPt').addEventListener('click',()=>{
+  const id=uid(),crit=!!P().crit;S.patients.push({id,hn:'ผู้ป่วยใหม่ '+(S.patients.length+1),group:crit?'AKI':'ESRD',crit,refSrc:'none',age:null,risks:[]});
+  S.cur=id;S.draft={...blankDraft(id),phase:S.draft.phase};syncDraft();save();updateMode();renderPtSel();fillForms();setTab('pre');$('ptMore').open=true;$('p_hn').focus();$('p_hn').select();toast('เพิ่มผู้ป่วยแล้ว ใส่รหัส/HN ได้เลย');
+});
+
+/* ---------- FIE nursing note ---------- */
+function fdarText(s){
+  const p=S.patients.find(x=>x.id===s.pid)||P(),c=calc(s),R=recommend(s,p),st=S.settings,cr=!!s.crit,map=mapOf(s.sbp,s.dbp),sg=s.signs||[];
+  const lab=(L,k)=>L.find(x=>x[0]===k)?.[1];
+  const signs=sg.map(k=>lab(SIGNS,k)).filter(Boolean),risks=(p.risks||[]).map(k=>lab(RISKS,k)).filter(Boolean);
+  const neOn=CONC[s.neConc]&&has(s.neRate)&&+s.neRate>0;
+  const ne=neOn?`Norepinephrine (${s.neConc.replace('/',':')}) ${s.neRate} mL/hr ≈${fmt(s.ne,2)} mcg/kg/min`:(+s.ne>0?`Norepinephrine ≈${fmt(s.ne,2)} mcg/kg/min`:'ไม่ได้รับยากระตุ้นความดัน');
+  const over=R.target!=null&&!R.stop&&R.target>R.maxNet+1,L=[];
+  const hrs=fmt(s.hours,(+s.hours)%1?1:0);
+  L.push('F: '+(cr?`เสี่ยงต่อความดันโลหิตต่ำระหว่างฟอกเลือด (IDH) ในผู้ป่วยวิกฤตที่มีภาวะน้ำเกิน${(neOn||+s.ne>0)?'และได้รับยากระตุ้นความดัน':''}`
+    :'เสี่ยงต่อความดันโลหิตต่ำระหว่างฟอกเลือดจากการดึงน้ำ'));
+  L.push('ข้อมูลสนับสนุน:');
+  if(cr){
+    L.push(`- ผู้ป่วยนอนเปล${(p.risks||[]).includes('mv')?' on ETT':''} ฟอกเลือดแบบ ${MOD[s.modality||'IHD']} ${hrs} ชม. (${s.date||today()})`);
+    L.push(`- BP ${s.sbp||'–'}/${s.dbp||'–'} mmHg, MAP ${fmt(map,0)} mmHg${has(s.hr)?`, HR ${s.hr}/min`:''}, ${ne}`);
+    if(signs.length)L.push('- อาการที่พบ: '+signs.join(', '));
+    const ex=[has(s.spo2)?`SpO₂ ${s.spo2}%`:'',has(s.fio2)?`FiO₂ ${s.fio2}%`:'',has(s.peep)?`PEEP ${s.peep}`:'',has(s.lactate)?`Lactate ${s.lactate}`:''].filter(Boolean);
+    if(ex.length)L.push('- '+ex.join(', '));
+    if(has(s.bal24))L.push(`- I/O 24 ชม. ${+s.bal24>0?'+':''}${n0(s.bal24)} mL`);
+  }else{
+    L.push(`- ฟอกเลือด ${hrs} ชม. (${s.date||today()}) น้ำหนักก่อนฟอก ${fmt(s.preW)} kg, หลังฟอกครั้งก่อน ${fmt(s.lastPostW)} kg, IDWG ${fmt(c.idwg)}%`);
+    L.push(`- BP ${s.sbp||'–'}/${s.dbp||'–'} mmHg${has(s.hr)?`, HR ${s.hr}/min`:''}`);
+    if(signs.length)L.push('- อาการที่พบ: '+signs.join(', '));
+  }
+  if(risks.length)L.push(`- ปัจจัยเสี่ยง IDH ${risks.length} ข้อ: ${risks.join(', ')}`);
+  if(cr){
+    if(R.target!=null)L.push(`- แพทย์สั่งดึงน้ำสุทธิ ${n0(R.target)} mL; PFM-HD ประเมินว่าดึงได้ไม่เกิน ${n0(R.maxNet)} mL (เพดาน UF rate ${n0(R.capRate)} mL/hr)`+(R.stop?' ยังไม่ควรเริ่มดึงน้ำ':over?` เป้าเกินเพดาน ${n0(R.target-R.maxNet)} mL`:' อยู่ในเพดานที่ปลอดภัย'));
+    L.push(`- สารกันเลือดแข็ง: ${isHep(s)?'Heparin':'Non-heparin, flush NSS '+n0(FV())+' mL ทุก 1 ชม.'}${s.primeAV?', priming สายคู่ A, V':''}`);
+    L.push(`- ตั้ง UF ${n0(c.vol)} mL (ชดเชยสารน้ำ${neOn?'/NE':''} ${n0(c.inf)} + ${isHep(s)?'':'flush '}${s.primeAV?'/priming A,V ':''}${n0(s.netFluid)} mL) UF rate ${n0(c.rate)} mL/hr`);
+  }else{
+    L.push(`- น้ำหนักเป้าหมาย ${fmt(s.targetW)} kg; PFM-HD ประเมินน้ำหนักเป้าหมายต่ำสุดที่ปลอดภัย ${fmt(R.minW)} kg`+(over?` (เป้าเกินเพดาน ${n0(R.target-R.maxNet)} mL)`:''));
+    L.push(`- ตั้ง UF ${n0(c.vol)} mL, UF rate ${n0(c.rate)} mL/hr, UFR ${fmt(c.ufr,1)} mL/kg/hr`);
+  }
+  L.push('','I:');
+  if(R.stop)L.push(`- รายงานแพทย์: MAP ${fmt(map,0)} ต่ำกว่า ${st.mapLow} ยังไม่ควรเริ่มดึงน้ำ แพทย์ให้ [ ]`);
+  else if(over)L.push('- รายงานแพทย์ว่าเป้าดึงน้ำเกินเพดานที่ปลอดภัย แพทย์ให้ [ลดเป้า / ขยายเวลา / เปลี่ยนวิธีฟอก]');
+  L.push(`- ตั้ง UF ตามแผนที่แพทย์ยืนยัน ${n0(c.vol)} mL, ${n0(c.rate)} mL/hr`);
+  L.push(cr?'- วัด BP/MAP ทุก 15 นาที ติดตาม SpO₂ ประเมิน perfusion':'- วัด BP ทุก 30–60 นาที ประเมินอาการตะคริว เวียนศีรษะ');
+  L.push('- เตรียม NSS พร้อมใช้');
+  if(cr)L.push(`- ลด/หยุด UF และรายงานแพทย์ทันทีเมื่อ MAP < ${st.mapLow} mmHg หรือต้องเพิ่ม NE`);
+  const mon=(s.mon||[]).slice().sort((a,b)=>a.t-b.t);
+  const did=[...new Set(mon.flatMap(m=>(m.sym||[]).filter(k=>['ns','ufStop','neUp'].includes(k))))].map(k=>lab(SYMS,k));
+  const notes=[...new Set(mon.map(m=>m.note).filter(Boolean))];
+  if(did.length||notes.length)L.push('- ระหว่างฟอก: '+[...did,...notes].join(', '));
+  L.push('','E:');
+  if(mon.length){
+    const maps=mon.map(m=>({t:m.t,v:mapOf(m.sbp,m.dbp)})).filter(x=>x.v!=null),mn=maps.length?maps.reduce((a,b)=>b.v<a.v?b:a):null;
+    const sbps=mon.map(m=>m.sbp),idhRows=mon.filter(m=>rowIDH(s,m)),u=maxUf(s);
+    if(cr)L.push(`- MAP ต่ำสุด ${mn?fmt(mn.v,0):'–'} mmHg${mn?` (ที่ ${fmtT(mn.t)} ชม.)`:''} จากก่อนฟอก ${fmt(map,0)} mmHg`);
+    else L.push(`- SBP ต่ำสุด ${Math.min(...sbps)} mmHg จากก่อนฟอก ${s.sbp||'–'} mmHg`);
+    L.push(idhRows.length?`- เกิด IDH ${idhRows.length} ครั้ง (เวลา ${idhRows.map(m=>fmtT(m.t)).join(', ')} ชม.)`:'- ไม่เกิด IDH');
+    if(cr){const nr=mon.map(m=>m.neRate).filter(has);if(nr.length){const mx=Math.max(...nr);L.push(mx>(+s.neRate||0)?`- NE เพิ่มสูงสุดเป็น ${mx} mL/hr`:'- NE rate คงเดิม')}
+      const sp=mon.map(m=>m.spo2).filter(has);if(sp.length)L.push(`- SpO₂ ต่ำสุด ${Math.min(...sp)}%`)}
+    L.push(`- UF ที่ดึงได้ ${n0(u)} mL จากที่ตั้ง ${n0(c.vol)} mL (${c.vol>0?fmt(u/c.vol*100,0):'–'}%)`);
+    if(!cr&&has(s.postW))L.push(`- น้ำหนักหลังฟอก ${fmt(s.postW)} kg ห่างเป้าหมาย ${fmt(s.postW-s.targetW)} kg`);
+  }else L.push('- [บันทึกหลังฟอก: MAP ต่ำสุด ___ / เกิด IDH ___ / UF ที่ดึงได้ ___ mL]');
+  return L.join('\n');
+}
+
+/* ---------- util ---------- */
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
+function copy(text,msg,fallbackEl){const fail=()=>{sel(fallbackEl);toast(fallbackEl?'เลือกข้อความไว้แล้ว กดคัดลอกเอง':'คัดลอกไม่ได้ในเครื่องนี้')};
+  try{navigator.clipboard.writeText(text).then(()=>toast(msg),fail)}catch(e){fail()}}
+function sel(el){if(el){el.hidden=false;el.focus();el.select()}}
+
+function render(){
+  syncDraft();$('sampleNote').hidden=!S.sample;
+  if(!S.draft.phase)S.draft.phase='post';
+  document.querySelectorAll('#phaseSel button').forEach(b=>b.classList.toggle('on',b.dataset.ph===S.draft.phase));
+  $('fdarPre').value=fdarText(S.draft);
+  try{$('heroDate').textContent=new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})}catch(e){}
+  {const td=today(),nT=S.sessions.filter(s=>s.date===td).length,nP=S.patients.length,nC=S.patients.filter(p=>p.crit).length;
+   $('heroStats').innerHTML=`<span><b>${nP}</b>ผู้ป่วยทั้งหมด</span><span><b>${nC}</b>นอนเปล ICU/IPD</span><span><b>${nT}</b>รอบฟอกวันนี้</span>`}
+  renderInputs();renderPatient();renderAssess();renderCalc();renderReco();renderAlert();syncQuick();
+  renderGs();
+  if(S.tab==='mon'){renderMon();const cs=curSession();$('fdarMon').value=cs?fdarText(cs):'บันทึกแผนจากหน้าก่อนฟอกก่อน'}if(S.tab==='trend')renderTrend();if(S.tab==='dash')renderDash();
+}
+syncDraft();updateMode();renderPtSel();fillForms();setTab(S.tab);
+</script>
+
+</body>
+</html>
